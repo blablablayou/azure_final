@@ -100,7 +100,7 @@ public class AzureDigitalApp {
             System.out.println("PIN must be 4 digits.");
             return;
         }
-
+        
         UserAccount newUser = new UserAccount(username, pin, mobile);
         users.put(username, newUser);
         fileManager.saveUsers(users);
@@ -174,6 +174,7 @@ public class AzureDigitalApp {
             System.out.println("| [8] View Transactions                            |");
             System.out.println("| [9] View My Vouchers                             |");
             System.out.println("| [10] Bills Payment                               |");
+            System.out.println("| [11] Buy Prepaid Load                            |");
             System.out.println("| [0/B] Logout                                     |");
             System.out.println("+--------------------------------------------------+");
             System.out.print("Choose: ");
@@ -190,6 +191,7 @@ public class AzureDigitalApp {
                 case "8" -> fileManager.showTransactions(acc.getUsername());
                 case "9" -> acc.viewMyVouchers(fileManager);              // <-- ensured here
                 case "10" -> billsPayment(acc);
+                case "11" -> buyLoad(acc);
                 case "0", "B" -> {
                     fileManager.saveUsers(users);
                     System.out.println("Logged out successfully.");
@@ -300,8 +302,6 @@ public class AzureDigitalApp {
                 }
             }
         }
-
-        String finalReference = reference;
 
         if (!confirmAction()) return;
 
@@ -543,6 +543,82 @@ public class AzureDigitalApp {
         System.out.println("Payment successful!");
     }
 
+    private void buyLoad(UserAccount acc) {
+    System.out.println("\n--- BUY PREPAID LOAD ---");
+
+    String[] networks = {"Globe/TM", "Smart/TNT", "DITO"};
+    System.out.println("Select Network:");
+    for (int i = 0; i < networks.length; i++) {
+        System.out.println("[" + (i + 1) + "] " + networks[i]);
+    }
+    System.out.print("Choose: ");
+    String n = sc.nextLine().trim();
+
+    int networkIndex;
+    try {
+        networkIndex = Integer.parseInt(n) - 1;
+        if (networkIndex < 0 || networkIndex >= networks.length) return;
+    } catch (Exception e) { return; }
+
+    String network = networks[networkIndex];
+
+    System.out.print("Enter Mobile Number (11 digits): ");
+    String number = sc.nextLine().trim();
+    if (!number.matches("^09\\d{9}$")) {
+        System.out.println("Invalid mobile number.");
+        return;
+    }
+
+    System.out.println("\nSelect Load Amount:");
+    int[] preset = {50, 100, 150, 200};
+    for (int i = 0; i < preset.length; i++) {
+        System.out.println("[" + (i + 1) + "] PHP " + preset[i]);
+    }
+    System.out.println("[5] Enter Custom Amount");
+    System.out.print("Choose: ");
+    String choice = sc.nextLine().trim();
+
+    double amount;
+    try {
+        int c = Integer.parseInt(choice);
+        if (c >= 1 && c <= 4) {
+            amount = preset[c - 1];
+        } else if (c == 5) {
+            System.out.print("Enter custom amount: ");
+            amount = Double.parseDouble(sc.nextLine());
+        } else {
+            return;
+        }
+    } catch (Exception e) {
+        return;
+    }
+
+    if (amount <= 0) {
+        System.out.println("Invalid amount.");
+        return;
+    }
+    if (!confirmAction()) return;
+
+    if (amount > acc.getBalance()) {
+        System.out.println("Insufficient balance.");
+        return;
+    }
+
+    // Deduct balance
+    acc.withdraw(amount);
+
+    fileManager.logTransaction(acc.getUsername(),
+        "Prepaid Load Purchase (" + network + " - " + number + ")",
+        amount
+    );
+
+    fileManager.saveUsers(users);
+
+    System.out.println("\nLoad Purchase Successful!");
+    System.out.println("Network: " + network);
+    System.out.println("Number : " + number);
+    System.out.println("Amount : PHP " + df.format(amount));
+}
     // Helper for rank-up notification
     private void checkRankUp(UserAccount acc, String prevRank) {
         if (!acc.getRank().equals(prevRank)) {

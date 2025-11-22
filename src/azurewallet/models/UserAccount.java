@@ -15,6 +15,9 @@ public class UserAccount {
     private int failedAttempts;
     private long lockEndTime;
     private static final DecimalFormat df = new DecimalFormat("#,##0.00");
+    private String transactionPin;
+    private String loyaltyTier = "Classic";
+    private String virtualBankNumber;
 
 
     public UserAccount(String username, String pin, String mobile) {
@@ -41,6 +44,12 @@ public class UserAccount {
         this.lockEndTime = lockEndTime;
     }
     
+    public void setTransactionPin(String pin) { this.transactionPin = pin; }
+    public String getTransactionPin() { return transactionPin; }
+    public void setLoyaltyTier(String tier) { this.loyaltyTier = tier; }
+    public String getLoyaltyTier() { return loyaltyTier; }
+    public void setVirtualBankNumber(String vbn) { this.virtualBankNumber = vbn; }
+    public String getVirtualBankNumber() { return virtualBankNumber; }
     public String getUsername() { return username; }
     public String getMobile() { return mobile; }
     public double getBalance() { return balance; }
