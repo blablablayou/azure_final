@@ -1,7 +1,7 @@
-package azurewallet.models;
+package com.azurewallet.models;
 
 import java.text.DecimalFormat;
-import azurewallet.system.FileManager;
+import com.azurewallet.system.FileManager;
 
 
 public class UserAccount {

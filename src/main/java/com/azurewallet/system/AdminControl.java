@@ -1,14 +1,14 @@
-package azurewallet.system;
+package com.azurewallet.system;
 
-import azurewallet.models.UserAccount;
-import azurewallet.models.VoucherSystem;
-import azurewallet.main.BackgroundScheduler;
+import com.azurewallet.models.UserAccount;
+import com.azurewallet.models.VoucherSystem;
+import com.azurewallet.main.BackgroundScheduler;
 import java.util.*;
 import java.io.*;
 import java.time.LocalDateTime;
 
 public class AdminControl {
-    private static final String DATA_DIR = "src/azurewallet/data/";
+    private static final String DATA_DIR = "src/main/resources/data/";
     private static final String ADMIN_PASS = "admin123";
     private static final String ADMIN_LOG = DATA_DIR + "admin_log.txt";
 

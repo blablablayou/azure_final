@@ -1,0 +1,15 @@
+target/
+bin/
+.classpath
+.project
+.settings/
+*.class
+*.jar
+*.zip
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.log
+src/main/resources/data/*.txt
+node_modules/

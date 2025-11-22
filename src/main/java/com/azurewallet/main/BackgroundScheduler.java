@@ -1,10 +1,10 @@
-package azurewallet.main;
+package com.azurewallet.main;
 
 import java.time.LocalDate;
 import java.util.Map;
-import azurewallet.models.UserAccount;
-import azurewallet.models.VoucherSystem;
-import azurewallet.system.FileManager;
+import com.azurewallet.models.UserAccount;
+import com.azurewallet.models.VoucherSystem;
+import com.azurewallet.system.FileManager;
 
 public class BackgroundScheduler {
     private final FileManager fileManager;

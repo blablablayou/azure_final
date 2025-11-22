@@ -1,4 +1,4 @@
-package azurewallet.models;
+package com.azurewallet.models;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

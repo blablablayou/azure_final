@@ -1,13 +1,13 @@
-package azurewallet.system;
+package com.azurewallet.system;
 
 import java.io.*;
 import java.util.*;
-import azurewallet.models.UserAccount;
+import com.azurewallet.models.UserAccount;
 import java.text.DecimalFormat;
 
 public class FileManager {
 
-    private static final String DATA_DIR = System.getProperty("user.dir") + "/src/azurewallet/data/";
+    private static final String DATA_DIR = System.getProperty("user.dir") + "/src/main/resources/data/";
     private static final String USERS_FILE = DATA_DIR + "users.txt";
     private static final String TRANSACTIONS_FILE = DATA_DIR + "transactions.txt";
     private static final String VOUCHERS_FILE = DATA_DIR + "vouchers.txt";
@@ -194,6 +194,7 @@ public class FileManager {
         } catch (IOException e) {}
         return count;
     }
+    
     // ====================== SCHEDULER LOGS ======================
 
     public void logSchedulerRun() {

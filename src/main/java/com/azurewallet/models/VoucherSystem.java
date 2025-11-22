@@ -1,12 +1,12 @@
-package azurewallet.models;
+package com.azurewallet.models;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
-import azurewallet.system.FileManager;
+import com.azurewallet.system.FileManager;
 
 public class VoucherSystem {
-    private static final String VOUCHERS_FILE = "src/azurewallet/data/vouchers.txt";
+    private static final String VOUCHERS_FILE = "src/main/resources/data/vouchers.txt";
 
     // =============== VOUCHER GENERATION ===============
     public static void generateMonthlyVouchers(Map<String, UserAccount> users) {
@@ -115,7 +115,7 @@ public class VoucherSystem {
 
     private static String generateVoucherCode(String username) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder code = new StringBuilder(username.substring(0, 2).toUpperCase());
+        StringBuilder code = new StringBuilder(username.substring(0, Math.min(2, username.length())).toUpperCase());
         for (int i = 0; i < 6; i++) {
             code.append(chars.charAt(new Random().nextInt(chars.length())));
         }
