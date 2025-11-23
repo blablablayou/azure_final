@@ -1,0 +1,108 @@
+/* App-wide styles for Azure Wallet */
+
+.login-wrapper {
+    -fx-alignment: center;
+}
+
+.login-container {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 60 40 60 40;
+    -fx-alignment: center;
+    -fx-spacing: 30;
+    -fx-max-width: 560;
+    -fx-pref-width: 560;
+}
+
+.form-box {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+    -fx-max-width: 420;
+    -fx-pref-width: 420;
+}
+
+/* Balance card */
+.balance-card {
+    -fx-background-color: linear-gradient(to bottom right, #2563EB, #3B82F6);
+    -fx-background-radius: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 4);
+    -fx-border-color: rgba(37,99,235,0.18);
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+    -fx-text-fill: white;
+}
+
+.tier-pill {
+    -fx-background-color: white;
+    -fx-text-fill: #2563EB;
+    -fx-padding: 4 8;
+    -fx-background-radius: 6;
+    -fx-font-size: 12;
+    -fx-font-weight: bold;
+}
+
+.brand-label {
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.06), 4, 0, 0, 1);
+    -fx-font-weight: bold;
+    -fx-font-size: 18;
+}
+
+.balance-title {
+    -fx-text-fill: white;
+    -fx-opacity: 0.95;
+    -fx-font-size: 12;
+}
+
+.balance-amount {
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 2);
+    -fx-font-size: 32;
+    -fx-font-weight: bold;
+}
+
+/* Virtual Card styles */
+.virtual-card {
+    -fx-background-color: linear-gradient(to bottom right, #2563EB, #60A5FA);
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.12), 10, 0, 0, 6);
+}
+
+/* Large Virtual Card for Wallet Page */
+.virtual-card-large {
+    -fx-background-color: linear-gradient(to bottom right, #10B981, #34D399);
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 15, 0, 0, 8);
+    -fx-pref-height: 240;
+    -fx-min-height: 240;
+}
+
+.virtual-card-title {
+    -fx-text-fill: white;
+    -fx-opacity: 0.95;
+    -fx-font-weight: 600;
+}
+.v-number {
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-font-size: 22;
+}
+.v-holder {
+    -fx-text-fill: rgba(255,255,255,0.9);
+    -fx-font-size: 12;
+}
+.v-expiry {
+    -fx-text-fill: rgba(255,255,255,0.85);
+    -fx-font-size: 11;
+}
+.virtual-card-button {
+    -fx-background-color: white;
+    -fx-text-fill: #2563EB;
+    -fx-background-radius: 8;
+}
+
+/* Tier card */
+.tier-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 3);
+}
