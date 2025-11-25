@@ -172,7 +172,7 @@ public class MainApp extends Application {
         forgotRow.setAlignment(Pos.CENTER);
         Label forgotLabel = new Label("Forgot your PIN?");
         forgotLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
-        Hyperlink forgotLink = new Hyperlink("Reset");
+        Hyperlink forgotLink = new Hyperlink("Click here");
         forgotLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
         forgotLink.setOnAction(e -> showForgotPinDialog());
         forgotRow.getChildren().addAll(forgotLabel, forgotLink);
@@ -1798,7 +1798,7 @@ public class MainApp extends Application {
         // Source selector as ToggleButtons for clarity
         HBox sourceBox = new HBox(8);
         sourceBox.setAlignment(Pos.CENTER_LEFT);
-        String[] sources = new String[]{"GCash","PayMaya","BPI","BDO","Other"};
+        String[] sources = new String[]{"GCash","PayMaya","BPI","BDO","Metrobank"};
         ToggleGroup sourceTG = new ToggleGroup();
         for (String s : sources) {
             ToggleButton tb = new ToggleButton(s);
@@ -1827,7 +1827,7 @@ public class MainApp extends Application {
         CheckBox receiptBox = new CheckBox("Save receipt to history");
         receiptBox.setSelected(true);
 
-        CheckBox confirmBox = new CheckBox("I confirm I have completed the transfer");
+        CheckBox confirmBox = new CheckBox("I confirm the deposit source");
 
         // Layout
         grid.add(balanceLabel, 0, 0, 2, 1);
@@ -1888,22 +1888,302 @@ public class MainApp extends Application {
         dialog.showAndWait().ifPresent(response -> {
             if (response == depositBtnType) {
                 try {
-                    double amt = Double.parseDouble(amountField.getText().trim());
-                    String source = "Unknown";
+                    final double amt = Double.parseDouble(amountField.getText().trim());
+                    final String source;
                     ToggleButton sel = (ToggleButton) sourceTG.getSelectedToggle();
                     if (sel != null) source = sel.getText();
-                    source = source + " (ref " + reference + ")";
-                    if (azureApp.deposit(currentUser, amt, source)) {
-                        showAlert("Success", String.format("Successfully deposited ₱%.2f", amt), Alert.AlertType.INFORMATION);
-                        refreshMainScreen();
-                    } else {
-                        showAlert("Error", "Deposit failed. Check amount and deposit limit.", Alert.AlertType.ERROR);
-                    }
+                    else source = "Unknown";
+                    
+                    // Show source-specific confirmation dialog
+                    showDepositConfirmationDialog(source, amt, reference, user);
                 } catch (NumberFormatException e) {
                     showAlert("Error", "Invalid amount entered", Alert.AlertType.ERROR);
                 }
             }
         });
+    }
+    
+    private void showDepositConfirmationDialog(final String source, final double amount, final String reference, final UserAccount user) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Confirming Deposit");
+        dialog.setHeaderText(null);
+        
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(28));
+        content.setStyle("-fx-background-color: #FFFFFF;");
+        
+        // Processing indicator section - Modern card style
+        VBox processingBox = new VBox(18);
+        processingBox.setAlignment(Pos.CENTER);
+        processingBox.setPadding(new Insets(28));
+        processingBox.setStyle(
+            "-fx-background-color: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); " +
+            "-fx-border-color: #D1D5DB; " +
+            "-fx-border-radius: 16; " +
+            "-fx-border-width: 2; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0, 0, 3);"
+        );
+        
+        Label processingLabel = new Label("Connecting to " + source);
+        processingLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+        processingLabel.setStyle("-fx-text-fill: #1F2937;");
+        
+        Label statusLabel = new Label("Please wait while we verify your deposit");
+        statusLabel.setFont(Font.font("System", 13));
+        statusLabel.setStyle("-fx-text-fill: #6B7280;");
+        statusLabel.setWrapText(true);
+        
+        // Animated loading indicator - larger and more visible
+        ProgressIndicator spinner = new ProgressIndicator();
+        spinner.setPrefSize(70, 70);
+        spinner.setStyle("-fx-progress-color: #FFD700;");
+        
+        processingBox.getChildren().addAll(spinner, processingLabel, statusLabel);
+        
+        // Deposit details card - Modern design
+        VBox detailsBox = new VBox(14);
+        detailsBox.setPadding(new Insets(20));
+        detailsBox.setStyle(
+            "-fx-background-color: #FFFFFF; " +
+            "-fx-border-color: #F3F4F6; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 2; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);"
+        );
+        
+        Label detailsTitle = new Label("Deposit Details");
+        detailsTitle.setFont(Font.font("System", FontWeight.BOLD, 15));
+        detailsTitle.setStyle("-fx-text-fill: #1E293B;");
+        
+        // Source row with icon
+        HBox sourceRow = new HBox(15);
+        sourceRow.setAlignment(Pos.CENTER_LEFT);
+        Label sourceIcon = new Label("🏦");
+        sourceIcon.setFont(Font.font("System", 14));
+        Label sourceLabel = new Label("From:");
+        sourceLabel.setStyle("-fx-text-fill: #64748B; -fx-min-width: 100; -fx-font-weight: bold;");
+        Label sourceValue = new Label(source);
+        sourceValue.setFont(Font.font("System", FontWeight.SEMI_BOLD, 14));
+        sourceValue.setStyle("-fx-text-fill: #1E293B;");
+        sourceRow.getChildren().addAll(sourceIcon, sourceLabel, sourceValue);
+        
+        // Amount row with icon
+        HBox amountRow = new HBox(15);
+        amountRow.setAlignment(Pos.CENTER_LEFT);
+        Label amountIcon = new Label("💰");
+        amountIcon.setFont(Font.font("System", 14));
+        Label amountLabel = new Label("Amount:");
+        amountLabel.setStyle("-fx-text-fill: #64748B; -fx-min-width: 100; -fx-font-weight: bold;");
+        Label amountValue = new Label(String.format("₱%.2f", amount));
+        amountValue.setFont(Font.font("System", FontWeight.BOLD, 16));
+        amountValue.setStyle("-fx-text-fill: #10B981;");
+        amountRow.getChildren().addAll(amountIcon, amountLabel, amountValue);
+        
+        // Reference row
+        HBox refRow = new HBox(15);
+        refRow.setAlignment(Pos.CENTER_LEFT);
+        Label refIcon = new Label("📋");
+        refIcon.setFont(Font.font("System", 14));
+        Label refLabel = new Label("Reference:");
+        refLabel.setStyle("-fx-text-fill: #64748B; -fx-min-width: 100; -fx-font-weight: bold;");
+        Label refValue = new Label(reference);
+        refValue.setFont(Font.font("System", 11));
+        refValue.setStyle("-fx-text-fill: #1E293B; -fx-font-family: 'Courier New';");
+        refRow.getChildren().addAll(refIcon, refLabel, refValue);
+        
+        detailsBox.getChildren().addAll(detailsTitle, sourceRow, amountRow, refRow);
+        
+        // Modern info/warning message with security badge
+        VBox securityBox = new VBox(10);
+        securityBox.setPadding(new Insets(14));
+        securityBox.setStyle(
+            "-fx-background-color: #F0F9FF; " +
+            "-fx-border-color: #7DD3FC; " +
+            "-fx-border-radius: 10; " +
+            "-fx-border-width: 2;"
+        );
+        
+        Label securityIcon = new Label("🔒");
+        securityIcon.setFont(Font.font("System", 16));
+        Label securityText = new Label(
+            "Secure Transaction\n" +
+            "Your deposit is encrypted and verified by " + source
+        );
+        securityText.setFont(Font.font("System", 12));
+        securityText.setStyle("-fx-text-fill: #0369A1; -fx-font-weight: semi-bold;");
+        securityText.setWrapText(true);
+        
+        HBox securityRow = new HBox(10);
+        securityRow.setAlignment(Pos.CENTER_LEFT);
+        securityRow.getChildren().addAll(securityIcon, securityText);
+        securityBox.getChildren().add(securityRow);
+        
+        content.getChildren().addAll(processingBox, detailsBox, securityBox);
+        
+        // Wrap content in ScrollPane to handle overflow
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-control-inner-background: white; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.getDialogPane().getButtonTypes().clear();
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(500);
+        dialog.getDialogPane().setPrefHeight(620);
+        
+        // Timer label - will show countdown
+        Label timerLabel = new Label();
+        timerLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
+        timerLabel.setStyle("-fx-text-fill: #FFD700; -fx-alignment: center;");
+        
+        // Simulate processing with a timeline
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(2400), e -> {
+                // Update to success after simulated processing
+                processingBox.getChildren().clear();
+                processingBox.setStyle(
+                    "-fx-background-color: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); " +
+                    "-fx-border-color: #86EFAC; " +
+                    "-fx-border-radius: 16; " +
+                    "-fx-border-width: 2; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.2), 12, 0, 0, 3);"
+                );
+                
+                Label successCheckmark = new Label("✓");
+                successCheckmark.setFont(Font.font("System", FontWeight.BOLD, 80));
+                successCheckmark.setStyle(
+                    "-fx-text-fill: #10B981; " +
+                    "-fx-alignment: center;"
+                );
+                
+                Label successLabel = new Label("Deposit Confirmed!");
+                successLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
+                successLabel.setStyle("-fx-text-fill: #10B981;");
+                
+                Label confirmMsg = new Label(source + " has confirmed your deposit");
+                confirmMsg.setFont(Font.font("System", 13));
+                confirmMsg.setStyle("-fx-text-fill: #059669; -fx-font-weight: semi-bold;");
+                
+                processingBox.getChildren().addAll(successCheckmark, successLabel, confirmMsg);
+                
+                // Process the actual deposit
+                String source_ref = source + " (ref " + reference + ")";
+                if (azureApp.deposit(currentUser, amount, source_ref)) {
+                    azureApp.getFileManager().saveUsers(azureApp.getUsers());
+                    
+                    // Add countdown timer with return button
+                    VBox timerBox = new VBox(12);
+                    timerBox.setAlignment(Pos.CENTER);
+                    timerBox.setPadding(new Insets(14));
+                    timerBox.setStyle(
+                        "-fx-background-color: #FEF3C7; " +
+                        "-fx-border-color: #FCD34D; " +
+                        "-fx-border-radius: 10; " +
+                        "-fx-border-width: 2;"
+                    );
+                    
+                    Label countdownLabel = new Label("Closing in:");
+                    countdownLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    countdownLabel.setStyle("-fx-text-fill: #92400E;");
+                    
+                    Label timerDisplay = new Label("10");
+                    timerDisplay.setFont(Font.font("System", FontWeight.BOLD, 36));
+                    timerDisplay.setStyle("-fx-text-fill: #DC2426; -fx-alignment: center;");
+                    
+                    Button returnNowBtn = new Button("Return to Wallet Now");
+                    returnNowBtn.setStyle(
+                        "-fx-background-color: #FFD700; " +
+                        "-fx-text-fill: #1F2937; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 10 20; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-font-size: 12;"
+                    );
+                    returnNowBtn.setPrefWidth(180);
+                    
+                    timerBox.getChildren().addAll(countdownLabel, timerDisplay, returnNowBtn);
+                    
+                    if (content.getChildren().size() > 2) {
+                        content.getChildren().remove(2);
+                    }
+                    content.getChildren().add(timerBox);
+                    
+                    // 10-second countdown with proper closure
+                    javafx.animation.Timeline countdownTimeline = new javafx.animation.Timeline();
+                    
+                    for (int i = 0; i < 11; i++) {
+                        final int sec = i;
+                        countdownTimeline.getKeyFrames().add(
+                            new javafx.animation.KeyFrame(
+                                javafx.util.Duration.millis(i * 1000L),
+                                ev -> {
+                                    int remaining = 10 - sec;
+                                    if (remaining >= 0) {
+                                        timerDisplay.setText(String.valueOf(remaining));
+                                        
+                                        if (remaining > 0 && remaining <= 3) {
+                                            timerDisplay.setStyle("-fx-text-fill: #DC2426; -fx-alignment: center; -fx-font-size: 40;");
+                                        } else if (remaining == 0) {
+                                            timerDisplay.setStyle("-fx-text-fill: #10B981; -fx-alignment: center; -fx-font-size: 36;");
+                                        }
+                                    }
+                                }
+                            )
+                        );
+                    }
+                    
+                    countdownTimeline.setOnFinished(ev -> {
+                        // Show success popup and close dialog when user clicks OK
+                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                        successAlert.setTitle("Deposit Successful");
+                        successAlert.setHeaderText(null);
+                        successAlert.setContentText(String.format("Successfully deposited ₱%.2f from %s", amount, source));
+                        successAlert.showAndWait();
+                        dialog.close();
+                        refreshMainScreen();
+                    });
+                    
+                    // Button to return immediately
+                    returnNowBtn.setOnAction(ev -> {
+                        countdownTimeline.stop();
+                        // Show success popup and close dialog when user clicks OK
+                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                        successAlert.setTitle("Deposit Successful");
+                        successAlert.setHeaderText(null);
+                        successAlert.setContentText(String.format("Successfully deposited ₱%.2f from %s", amount, source));
+                        successAlert.showAndWait();
+                        dialog.close();
+                        refreshMainScreen();
+                    });
+                    
+                    countdownTimeline.setCycleCount(1);
+                    countdownTimeline.play();
+                } else {
+                    Label failLabel = new Label("Deposit Failed");
+                    failLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
+                    failLabel.setStyle("-fx-text-fill: #DC2626;");
+                    
+                    Label failMsg = new Label("Please try again");
+                    failMsg.setFont(Font.font("System", 12));
+                    failMsg.setStyle("-fx-text-fill: #991B1B;");
+                    
+                    processingBox.setStyle(
+                        "-fx-background-color: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); " +
+                        "-fx-border-color: #FECACA; " +
+                        "-fx-border-radius: 16; " +
+                        "-fx-border-width: 2;"
+                    );
+                    processingBox.getChildren().clear();
+                    processingBox.getChildren().addAll(failLabel, failMsg);
+                }
+            })
+        );
+        timeline.setCycleCount(1);
+        timeline.play();
+        
+        dialog.showAndWait();
     }
     
     private void showWithdrawDialog() {
@@ -2220,77 +2500,184 @@ public class MainApp extends Application {
         dialog.setTitle("V-Card Shop");
         dialog.setHeaderText("Choose product category");
 
-        VBox mainContent = new VBox(16);
-        mainContent.setPadding(new Insets(20));
-        mainContent.setStyle("-fx-background-color: #F8FAFC;");
+        VBox mainContent = new VBox(18);
+        mainContent.setPadding(new Insets(24));
+        mainContent.setStyle("-fx-background-color: #FFFFFF;");
 
-        // Category buttons
-        Button gamingBtn = createCategoryButton("🎮 Gaming", "Steam, Roblox, Mobile Legends");
-        Button streamingBtn = createCategoryButton("🎬 Streaming", "Netflix, Disney+, Amazon Prime");
-        Button mobileBtn = createCategoryButton("📱 Mobile & Apps", "Google Play, App Store");
-        Button musicBtn = createCategoryButton("🎵 Music", "Spotify, YouTube Music");
+        // Header title
+        Label headerTitle = new Label("Choose product category");
+        headerTitle.setFont(Font.font("System", FontWeight.BOLD, 18));
+        headerTitle.setStyle("-fx-text-fill: #1F2937;");
 
-        HBox categoryBox = new HBox(12);
-        categoryBox.setAlignment(Pos.CENTER);
-        categoryBox.getChildren().addAll(gamingBtn, streamingBtn, mobileBtn, musicBtn);
+        // Category buttons with consistent styling
+        Button gamingBtn = createModernCategoryButton("🎮 Gaming", "Steam, Roblox,\nMobile Legends");
+        Button streamingBtn = createModernCategoryButton("🎬 Streaming", "Netflix, Disney+,\nAmazon Prime");
+        Button mobileBtn = createModernCategoryButton("📱 Mobile & Apps", "Google Play,\nApp Store");
+        Button musicBtn = createModernCategoryButton("🎵 Music", "Spotify,\nYouTube Music");
+
+        // Create category grid (2x2 for better mobile layout)
+        GridPane categoryGrid = new GridPane();
+        categoryGrid.setHgap(12);
+        categoryGrid.setVgap(12);
+        categoryGrid.setAlignment(Pos.CENTER);
+
+        ColumnConstraints col1 = new ColumnConstraints(); col1.setPercentWidth(50);
+        ColumnConstraints col2 = new ColumnConstraints(); col2.setPercentWidth(50);
+        categoryGrid.getColumnConstraints().addAll(col1, col2);
+
+        gamingBtn.setMaxWidth(Double.MAX_VALUE);
+        streamingBtn.setMaxWidth(Double.MAX_VALUE);
+        mobileBtn.setMaxWidth(Double.MAX_VALUE);
+        musicBtn.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(gamingBtn, Priority.ALWAYS);
+        GridPane.setHgrow(streamingBtn, Priority.ALWAYS);
+        GridPane.setHgrow(mobileBtn, Priority.ALWAYS);
+        GridPane.setHgrow(musicBtn, Priority.ALWAYS);
+
+        categoryGrid.add(gamingBtn, 0, 0);
+        categoryGrid.add(streamingBtn, 1, 0);
+        categoryGrid.add(mobileBtn, 0, 1);
+        categoryGrid.add(musicBtn, 1, 1);
 
         // Title for products section
         Label productsTitle = new Label("Choose Your Product");
         productsTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
-        productsTitle.setStyle("-fx-text-fill: #0F172A;");
+        productsTitle.setStyle("-fx-text-fill: #1F2937; -fx-padding: 8 0 0 0;");
 
-        // Products container (scrollable)
+        // Products container (scrollable) with modern card styling
         VBox productsContainer = new VBox(12);
-        productsContainer.setPadding(new Insets(12));
-        productsContainer.setStyle("-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-radius: 10; -fx-border-width: 1;");
+        productsContainer.setPadding(new Insets(16));
+        productsContainer.setStyle(
+            "-fx-background-color: #FFFFFF; " +
+            "-fx-border-color: #E5E7EB; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1.5; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);"
+        );
 
         ScrollPane productsScroll = new ScrollPane(productsContainer);
         productsScroll.setFitToWidth(true);
-        productsScroll.setPrefHeight(250);
-        productsScroll.setStyle("-fx-control-inner-background: white;");
+        productsScroll.setPrefHeight(280);
+        productsScroll.setMinHeight(280);
+        productsScroll.setStyle("-fx-control-inner-background: white; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+        productsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        productsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
         // Initial products (Gaming)
-        updateProductList(productsContainer, "gaming");
+        updateProductListModern(productsContainer, "gaming");
 
-        // Wire category buttons
+        // Category button action handlers with consistent visual feedback
+        final String[] selectedCategory = {"gaming"};
+
+        Runnable updateButtonStyles = () -> {
+            String activeStyle = "-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 12 16; -fx-border-radius: 10; -fx-border-color: #FFD700; -fx-border-width: 2; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 6, 0, 0, 2);";
+            String inactiveStyle = "-fx-background-color: #F3F4F6; -fx-text-fill: #6B7280; -fx-padding: 12 16; -fx-border-radius: 10; -fx-border-color: #E5E7EB; -fx-border-width: 1.5; -fx-font-weight: normal;";
+
+            gamingBtn.setStyle(selectedCategory[0].equals("gaming") ? activeStyle : inactiveStyle);
+            streamingBtn.setStyle(selectedCategory[0].equals("streaming") ? activeStyle : inactiveStyle);
+            mobileBtn.setStyle(selectedCategory[0].equals("mobile") ? activeStyle : inactiveStyle);
+            musicBtn.setStyle(selectedCategory[0].equals("music") ? activeStyle : inactiveStyle);
+        };
+
         gamingBtn.setOnAction(e -> {
-            gamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
-            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            updateProductList(productsContainer, "gaming");
+            selectedCategory[0] = "gaming";
+            updateButtonStyles.run();
+            updateProductListModern(productsContainer, "gaming");
         });
         streamingBtn.setOnAction(e -> {
-            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            streamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
-            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            updateProductList(productsContainer, "streaming");
+            selectedCategory[0] = "streaming";
+            updateButtonStyles.run();
+            updateProductListModern(productsContainer, "streaming");
         });
         mobileBtn.setOnAction(e -> {
-            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            mobileBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
-            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            updateProductList(productsContainer, "mobile");
+            selectedCategory[0] = "mobile";
+            updateButtonStyles.run();
+            updateProductListModern(productsContainer, "mobile");
         });
         musicBtn.setOnAction(e -> {
-            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
-            musicBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
-            updateProductList(productsContainer, "music");
+            selectedCategory[0] = "music";
+            updateButtonStyles.run();
+            updateProductListModern(productsContainer, "music");
         });
 
-        // Set initial style for gaming button
-        gamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+        // Set initial button styles
+        updateButtonStyles.run();
 
-        mainContent.getChildren().addAll(categoryBox, productsTitle, productsScroll);
+        mainContent.getChildren().addAll(headerTitle, categoryGrid, productsTitle, productsScroll);
+        VBox.setVgrow(productsScroll, Priority.ALWAYS);
 
         dialog.getDialogPane().setContent(mainContent);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(480);
+        dialog.getDialogPane().setPrefHeight(700);
 
         dialog.showAndWait();
+    }
+
+    private Button createModernCategoryButton(String title, String description) {
+        VBox buttonContent = new VBox(4);
+        buttonContent.setAlignment(Pos.CENTER);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        titleLabel.setStyle("-fx-text-fill: inherit;");
+
+        Label descLabel = new Label(description);
+        descLabel.setFont(Font.font("System", 10));
+        descLabel.setStyle("-fx-text-fill: inherit; -fx-wrap-text: true;");
+        descLabel.setWrapText(true);
+
+        buttonContent.getChildren().addAll(titleLabel, descLabel);
+
+        Button btn = new Button();
+        btn.setGraphic(buttonContent);
+        btn.setStyle(
+            "-fx-background-color: #F3F4F6; " +
+            "-fx-text-fill: #6B7280; " +
+            "-fx-padding: 12 16; " +
+            "-fx-border-radius: 10; " +
+            "-fx-border-color: #E5E7EB; " +
+            "-fx-border-width: 1.5; " +
+            "-fx-cursor: hand; " +
+            "-fx-font-size: 13;"
+        );
+        btn.setPrefHeight(80);
+        btn.setMinHeight(80);
+        btn.setWrapText(true);
+
+        // Hover effect
+        btn.setOnMouseEntered(e -> {
+            if (!btn.getStyle().contains("#FFD700")) {
+                btn.setStyle(
+                    "-fx-background-color: #F0F0F0; " +
+                    "-fx-text-fill: #374151; " +
+                    "-fx-padding: 12 16; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-color: #D1D5DB; " +
+                    "-fx-border-width: 1.5; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-font-size: 13; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);"
+                );
+            }
+        });
+        btn.setOnMouseExited(e -> {
+            if (!btn.getStyle().contains("#FFD700")) {
+                btn.setStyle(
+                    "-fx-background-color: #F3F4F6; " +
+                    "-fx-text-fill: #6B7280; " +
+                    "-fx-padding: 12 16; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-color: #E5E7EB; " +
+                    "-fx-border-width: 1.5; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-font-size: 13;"
+                );
+            }
+        });
+
+        return btn;
     }
 
     private Button createCategoryButton(String title, String description) {
@@ -2317,34 +2704,324 @@ public class MainApp extends Application {
         return btn;
     }
 
+    private void updateProductListModern(VBox container, String category) {
+        container.getChildren().clear();
+
+        java.util.Map<String, java.util.List<String[]>> products = new java.util.HashMap<>();
+
+        // Gaming products (name, price) - Expanded with many varieties
+        java.util.List<String[]> gaming = java.util.Arrays.asList(
+            // Steam Wallet
+            new String[]{"Steam Wallet", "₱100"}, new String[]{"Steam Wallet", "₱300"},
+            new String[]{"Steam Wallet", "₱500"}, new String[]{"Steam Wallet", "₱1000"},
+            new String[]{"Steam Wallet", "₱2000"}, new String[]{"Steam Wallet", "₱5000"},
+            // Roblox Robux
+            new String[]{"Roblox Robux", "₱250"}, new String[]{"Roblox Robux", "₱500"},
+            new String[]{"Roblox Robux", "₱1500"}, new String[]{"Roblox Robux", "₱3000"},
+            // Mobile Legends
+            new String[]{"Mobile Legends", "₱50"}, new String[]{"Mobile Legends", "₱100"},
+            new String[]{"Mobile Legends", "₱500"}, new String[]{"Mobile Legends", "₱2000"},
+            // Call of Duty
+            new String[]{"Call of Duty", "₱300"}, new String[]{"Call of Duty", "₱600"},
+            new String[]{"Call of Duty", "₱1500"}, new String[]{"Call of Duty", "₱3000"},
+            // PUBG Mobile
+            new String[]{"PUBG Mobile", "₱75"}, new String[]{"PUBG Mobile", "₱150"},
+            new String[]{"PUBG Mobile", "₱500"}, new String[]{"PUBG Mobile", "₱2000"},
+            // Genshin Impact
+            new String[]{"Genshin Impact", "₱30"}, new String[]{"Genshin Impact", "₱300"},
+            new String[]{"Genshin Impact", "₱600"}, new String[]{"Genshin Impact", "₱3000"},
+            // Final Fantasy
+            new String[]{"Final Fantasy XIV", "₱500"}, new String[]{"Final Fantasy XIV", "₱1000"},
+            // Valorant
+            new String[]{"Valorant Points", "₱100"}, new String[]{"Valorant Points", "₱500"},
+            new String[]{"Valorant Points", "₱1000"}, new String[]{"Valorant Points", "₱3000"}
+        );
+
+        java.util.List<String[]> streaming = java.util.Arrays.asList(
+            // Netflix
+            new String[]{"Netflix", "₱149"}, new String[]{"Netflix", "₱349"},
+            new String[]{"Netflix", "₱549"}, new String[]{"Netflix", "₱899"},
+            // Disney+
+            new String[]{"Disney+", "₱99"}, new String[]{"Disney+", "₱299"},
+            new String[]{"Disney+", "₱799"}, new String[]{"Disney+", "₱1999"},
+            // Amazon Prime Video
+            new String[]{"Amazon Prime", "₱149"}, new String[]{"Amazon Prime", "₱499"},
+            new String[]{"Amazon Prime", "₱1499"},
+            // HBO Max
+            new String[]{"HBO Max", "₱199"}, new String[]{"HBO Max", "₱599"},
+            new String[]{"HBO Max", "₱1499"}, new String[]{"HBO Max", "₱2999"},
+            // iQIYI
+            new String[]{"iQIYI", "₱99"}, new String[]{"iQIYI", "₱299"},
+            new String[]{"iQIYI", "₱599"}, new String[]{"iQIYI", "₱1299"},
+            // WeTV
+            new String[]{"WeTV", "₱99"}, new String[]{"WeTV", "₱249"},
+            new String[]{"WeTV", "₱499"}, new String[]{"WeTV", "₱999"},
+            // Viu
+            new String[]{"Viu", "₱49"}, new String[]{"Viu", "₱149"},
+            new String[]{"Viu", "₱299"}, new String[]{"Viu", "₱749"},
+            // Apple TV+
+            new String[]{"Apple TV+", "₱99"}, new String[]{"Apple TV+", "₱299"},
+            new String[]{"Apple TV+", "₱799"}
+        );
+
+        java.util.List<String[]> mobile = java.util.Arrays.asList(
+            // Google Play
+            new String[]{"Google Play", "₱50"}, new String[]{"Google Play", "₱100"},
+            new String[]{"Google Play", "₱300"}, new String[]{"Google Play", "₱500"},
+            new String[]{"Google Play", "₱1000"}, new String[]{"Google Play", "₱3000"},
+            // Apple App Store
+            new String[]{"App Store", "₱100"}, new String[]{"App Store", "₱300"},
+            new String[]{"App Store", "₱500"}, new String[]{"App Store", "₱1000"},
+            new String[]{"App Store", "₱3000"},
+            // PlayStation Store
+            new String[]{"PlayStation Store", "₱200"}, new String[]{"PlayStation Store", "₱500"},
+            new String[]{"PlayStation Store", "₱1000"}, new String[]{"PlayStation Store", "₱2000"},
+            new String[]{"PlayStation Store", "₱5000"},
+            // Xbox Game Pass
+            new String[]{"Xbox Game Pass", "₱99"}, new String[]{"Xbox Game Pass", "₱299"},
+            new String[]{"Xbox Game Pass", "₱999"},
+            // Nintendo eShop
+            new String[]{"Nintendo eShop", "₱100"}, new String[]{"Nintendo eShop", "₱500"},
+            new String[]{"Nintendo eShop", "₱1000"}, new String[]{"Nintendo eShop", "₱2000"}
+        );
+
+        java.util.List<String[]> music = java.util.Arrays.asList(
+            // Spotify
+            new String[]{"Spotify Premium", "₱109"}, new String[]{"Spotify Premium", "₱129"},
+            new String[]{"Spotify Premium", "₱299"}, new String[]{"Spotify Premium", "₱1299"},
+            // YouTube Music
+            new String[]{"YouTube Music", "₱109"}, new String[]{"YouTube Music", "₱129"},
+            new String[]{"YouTube Music", "₱299"}, new String[]{"YouTube Music", "₱1299"},
+            // Apple Music
+            new String[]{"Apple Music", "₱109"}, new String[]{"Apple Music", "₱129"},
+            new String[]{"Apple Music", "₱299"}, new String[]{"Apple Music", "₱1299"},
+            // Amazon Music
+            new String[]{"Amazon Music", "₱99"}, new String[]{"Amazon Music", "₱149"},
+            new String[]{"Amazon Music", "₱299"}, new String[]{"Amazon Music", "₱999"},
+            // Deezer
+            new String[]{"Deezer", "₱99"}, new String[]{"Deezer", "₱199"},
+            new String[]{"Deezer", "₱499"}, new String[]{"Deezer", "₱999"},
+            // Tidal
+            new String[]{"Tidal", "₱149"}, new String[]{"Tidal", "₱299"},
+            new String[]{"Tidal", "₱1499"},
+            // SoundCloud
+            new String[]{"SoundCloud", "₱99"}, new String[]{"SoundCloud", "₱299"},
+            new String[]{"SoundCloud", "₱999"}
+        );
+
+        products.put("gaming", gaming);
+        products.put("streaming", streaming);
+        products.put("mobile", mobile);
+        products.put("music", music);
+
+        // Display provider header with icon
+        Label providerLabel = new Label();
+        switch (category) {
+            case "gaming":
+                providerLabel.setText("🎮 Gaming Platforms");
+                break;
+            case "streaming":
+                providerLabel.setText("🎬 Streaming Services");
+                break;
+            case "mobile":
+                providerLabel.setText("📱 Mobile & App Stores");
+                break;
+            case "music":
+                providerLabel.setText("🎵 Music Streaming");
+                break;
+        }
+        providerLabel.setFont(Font.font("System", FontWeight.BOLD, 15));
+        providerLabel.setStyle("-fx-text-fill: #1F2937;");
+        container.getChildren().add(providerLabel);
+
+        java.util.List<String[]> categoryProducts = products.get(category);
+
+        // Group products by provider
+        java.util.Map<String, java.util.List<String>> groupedByProvider = new java.util.LinkedHashMap<>();
+        for (String[] product : categoryProducts) {
+            String provider = product[0].replaceAll(" \\d+", ""); // Get provider name
+            String price = product[1];
+            groupedByProvider.computeIfAbsent(provider, k -> new java.util.ArrayList<>()).add(price);
+        }
+
+        for (java.util.Map.Entry<String, java.util.List<String>> entry : groupedByProvider.entrySet()) {
+            String provider = entry.getKey();
+            java.util.List<String> prices = entry.getValue();
+
+            VBox providerBox = new VBox(10);
+            providerBox.setPadding(new Insets(14));
+            providerBox.setStyle(
+                "-fx-background-color: #F9FAFB; " +
+                "-fx-border-color: #E5E7EB; " +
+                "-fx-border-radius: 10; " +
+                "-fx-border-width: 1.5; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);"
+            );
+
+            Label providerTitle = new Label(provider);
+            providerTitle.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+            providerTitle.setStyle("-fx-text-fill: #1F2937; -fx-padding: 0 0 4 0;");
+
+            HBox priceBox = new HBox(8);
+            priceBox.setAlignment(Pos.CENTER_LEFT);
+
+            for (String price : prices) {
+                Button priceBtn = new Button(price);
+                priceBtn.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-border-color: #FFD700; " +
+                    "-fx-border-width: 2; " +
+                    "-fx-border-radius: 8; " +
+                    "-fx-text-fill: #FFD700; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-font-size: 12; " +
+                    "-fx-padding: 8 14; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.1), 4, 0, 0, 1);"
+                );
+                priceBtn.setPrefHeight(36);
+                priceBtn.setMinWidth(70);
+                
+                // Hover effect
+                priceBtn.setOnMouseEntered(e -> priceBtn.setStyle(
+                    "-fx-background-color: #FFFACD; " +
+                    "-fx-border-color: #FFD700; " +
+                    "-fx-border-width: 2; " +
+                    "-fx-border-radius: 8; " +
+                    "-fx-text-fill: #FFD700; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-font-size: 12; " +
+                    "-fx-padding: 8 14; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 6, 0, 0, 2);"
+                ));
+                priceBtn.setOnMouseExited(e -> priceBtn.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-border-color: #FFD700; " +
+                    "-fx-border-width: 2; " +
+                    "-fx-border-radius: 8; " +
+                    "-fx-text-fill: #FFD700; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-font-size: 12; " +
+                    "-fx-padding: 8 14; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.1), 4, 0, 0, 1);"
+                ));
+                
+                priceBtn.setOnAction(e -> {
+                    showPaymentConfirmationDialog(provider, price);
+                });
+                priceBox.getChildren().add(priceBtn);
+            }
+
+            providerBox.getChildren().addAll(providerTitle, priceBox);
+            container.getChildren().add(providerBox);
+        }
+    }
+
     private void updateProductList(VBox container, String category) {
         container.getChildren().clear();
 
         java.util.Map<String, java.util.List<String[]>> products = new java.util.HashMap<>();
 
-        // Gaming products (name, price)
+        // Gaming products (name, price) - Expanded with many varieties
         java.util.List<String[]> gaming = java.util.Arrays.asList(
+            // Steam Wallet
+            new String[]{"Steam Wallet", "₱100"}, new String[]{"Steam Wallet", "₱300"},
             new String[]{"Steam Wallet", "₱500"}, new String[]{"Steam Wallet", "₱1000"},
-            new String[]{"Roblox Robux", "₱500"}, new String[]{"Roblox Robux", "₱1500"},
-            new String[]{"Mobile Legends", "₱100"}, new String[]{"Mobile Legends", "₱500"}
+            new String[]{"Steam Wallet", "₱2000"}, new String[]{"Steam Wallet", "₱5000"},
+            // Roblox Robux
+            new String[]{"Roblox Robux", "₱250"}, new String[]{"Roblox Robux", "₱500"},
+            new String[]{"Roblox Robux", "₱1500"}, new String[]{"Roblox Robux", "₱3000"},
+            // Mobile Legends
+            new String[]{"Mobile Legends", "₱50"}, new String[]{"Mobile Legends", "₱100"},
+            new String[]{"Mobile Legends", "₱500"}, new String[]{"Mobile Legends", "₱2000"},
+            // Call of Duty
+            new String[]{"Call of Duty", "₱300"}, new String[]{"Call of Duty", "₱600"},
+            new String[]{"Call of Duty", "₱1500"}, new String[]{"Call of Duty", "₱3000"},
+            // PUBG Mobile
+            new String[]{"PUBG Mobile", "₱75"}, new String[]{"PUBG Mobile", "₱150"},
+            new String[]{"PUBG Mobile", "₱500"}, new String[]{"PUBG Mobile", "₱2000"},
+            // Genshin Impact
+            new String[]{"Genshin Impact", "₱30"}, new String[]{"Genshin Impact", "₱300"},
+            new String[]{"Genshin Impact", "₱600"}, new String[]{"Genshin Impact", "₱3000"},
+            // Final Fantasy
+            new String[]{"Final Fantasy XIV", "₱500"}, new String[]{"Final Fantasy XIV", "₱1000"},
+            // Valorant
+            new String[]{"Valorant Points", "₱100"}, new String[]{"Valorant Points", "₱500"},
+            new String[]{"Valorant Points", "₱1000"}, new String[]{"Valorant Points", "₱3000"}
         );
 
         java.util.List<String[]> streaming = java.util.Arrays.asList(
-            new String[]{"Netflix", "₱249"}, new String[]{"Netflix", "₱549"},
-            new String[]{"Disney+", "₱299"}, new String[]{"Disney+", "₱799"},
-            new String[]{"Amazon Prime", "₱149"}, new String[]{"Amazon Prime", "₱1499"}
+            // Netflix
+            new String[]{"Netflix", "₱149"}, new String[]{"Netflix", "₱349"},
+            new String[]{"Netflix", "₱549"}, new String[]{"Netflix", "₱899"},
+            // Disney+
+            new String[]{"Disney+", "₱99"}, new String[]{"Disney+", "₱299"},
+            new String[]{"Disney+", "₱799"}, new String[]{"Disney+", "₱1999"},
+            // Amazon Prime Video
+            new String[]{"Amazon Prime", "₱149"}, new String[]{"Amazon Prime", "₱499"},
+            new String[]{"Amazon Prime", "₱1499"},
+            // HBO Max
+            new String[]{"HBO Max", "₱199"}, new String[]{"HBO Max", "₱599"},
+            new String[]{"HBO Max", "₱1499"}, new String[]{"HBO Max", "₱2999"},
+            // iQIYI
+            new String[]{"iQIYI", "₱99"}, new String[]{"iQIYI", "₱299"},
+            new String[]{"iQIYI", "₱599"}, new String[]{"iQIYI", "₱1299"},
+            // WeTV
+            new String[]{"WeTV", "₱99"}, new String[]{"WeTV", "₱249"},
+            new String[]{"WeTV", "₱499"}, new String[]{"WeTV", "₱999"},
+            // Viu
+            new String[]{"Viu", "₱49"}, new String[]{"Viu", "₱149"},
+            new String[]{"Viu", "₱299"}, new String[]{"Viu", "₱749"},
+            // Apple TV+
+            new String[]{"Apple TV+", "₱99"}, new String[]{"Apple TV+", "₱299"},
+            new String[]{"Apple TV+", "₱799"}
         );
 
         java.util.List<String[]> mobile = java.util.Arrays.asList(
-            new String[]{"Google Play", "₱500"}, new String[]{"Google Play", "₱1000"},
+            // Google Play
+            new String[]{"Google Play", "₱50"}, new String[]{"Google Play", "₱100"},
+            new String[]{"Google Play", "₱300"}, new String[]{"Google Play", "₱500"},
+            new String[]{"Google Play", "₱1000"}, new String[]{"Google Play", "₱3000"},
+            // Apple App Store
+            new String[]{"App Store", "₱100"}, new String[]{"App Store", "₱300"},
             new String[]{"App Store", "₱500"}, new String[]{"App Store", "₱1000"},
-            new String[]{"PlayStation Store", "₱500"}, new String[]{"PlayStation Store", "₱1500"}
+            new String[]{"App Store", "₱3000"},
+            // PlayStation Store
+            new String[]{"PlayStation Store", "₱200"}, new String[]{"PlayStation Store", "₱500"},
+            new String[]{"PlayStation Store", "₱1000"}, new String[]{"PlayStation Store", "₱2000"},
+            new String[]{"PlayStation Store", "₱5000"},
+            // Xbox Game Pass
+            new String[]{"Xbox Game Pass", "₱99"}, new String[]{"Xbox Game Pass", "₱299"},
+            new String[]{"Xbox Game Pass", "₱999"},
+            // Nintendo eShop
+            new String[]{"Nintendo eShop", "₱100"}, new String[]{"Nintendo eShop", "₱500"},
+            new String[]{"Nintendo eShop", "₱1000"}, new String[]{"Nintendo eShop", "₱2000"}
         );
 
         java.util.List<String[]> music = java.util.Arrays.asList(
-            new String[]{"Spotify Premium", "₱129"}, new String[]{"Spotify Premium", "₱1299"},
-            new String[]{"YouTube Music", "₱129"}, new String[]{"YouTube Music", "₱1299"},
-            new String[]{"Apple Music", "₱109"}, new String[]{"Apple Music", "₱1090"}
+            // Spotify
+            new String[]{"Spotify Premium", "₱109"}, new String[]{"Spotify Premium", "₱129"},
+            new String[]{"Spotify Premium", "₱299"}, new String[]{"Spotify Premium", "₱1299"},
+            // YouTube Music
+            new String[]{"YouTube Music", "₱109"}, new String[]{"YouTube Music", "₱129"},
+            new String[]{"YouTube Music", "₱299"}, new String[]{"YouTube Music", "₱1299"},
+            // Apple Music
+            new String[]{"Apple Music", "₱109"}, new String[]{"Apple Music", "₱129"},
+            new String[]{"Apple Music", "₱299"}, new String[]{"Apple Music", "₱1299"},
+            // Amazon Music
+            new String[]{"Amazon Music", "₱99"}, new String[]{"Amazon Music", "₱149"},
+            new String[]{"Amazon Music", "₱299"}, new String[]{"Amazon Music", "₱999"},
+            // Deezer
+            new String[]{"Deezer", "₱99"}, new String[]{"Deezer", "₱199"},
+            new String[]{"Deezer", "₱499"}, new String[]{"Deezer", "₱999"},
+            // Tidal
+            new String[]{"Tidal", "₱149"}, new String[]{"Tidal", "₱299"},
+            new String[]{"Tidal", "₱1499"},
+            // SoundCloud
+            new String[]{"SoundCloud", "₱99"}, new String[]{"SoundCloud", "₱299"},
+            new String[]{"SoundCloud", "₱999"}
         );
 
         products.put("gaming", gaming);
@@ -2396,21 +3073,12 @@ public class MainApp extends Application {
 
             HBox priceBox = new HBox(8);
             priceBox.setAlignment(Pos.CENTER_LEFT);
-            priceBox.setStyle("-fx-wrap-text: true;");
 
             for (String price : prices) {
                 Button priceBtn = new Button(price);
                 priceBtn.setStyle("-fx-background-color: white; -fx-border-color: #FFD700; -fx-border-width: 2; -fx-border-radius: 6; -fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-padding: 6 12; -fx-cursor: hand;");
                 priceBtn.setOnAction(e -> {
-                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirm.setTitle("Purchase Confirmation");
-                    confirm.setHeaderText("Confirm purchase");
-                    confirm.setContentText(String.format("Buy %s voucher for %s?", provider, price));
-                    confirm.showAndWait().ifPresent(response -> {
-                        if (response == ButtonType.OK) {
-                            showAlert("Success", String.format("Successfully purchased %s voucher worth %s!\n\nCheck your email for the code.", provider, price), Alert.AlertType.INFORMATION);
-                        }
-                    });
+                    showPaymentConfirmationDialog(provider, price);
                 });
                 priceBox.getChildren().add(priceBtn);
             }
@@ -3861,6 +4529,337 @@ public class MainApp extends Application {
         alert.showAndWait();
     }
     
+    private void showPaymentConfirmationDialog(String productName, String price) {
+        final UserAccount user = azureApp.getUser(currentUser);
+        if (user == null) {
+            showAlert("Error", "User not found. Please login again.", Alert.AlertType.ERROR);
+            return;
+        }
+        
+        // Extract price amount as integer
+        final int priceAmount;
+        try {
+            priceAmount = Integer.parseInt(price.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Invalid price format.", Alert.AlertType.ERROR);
+            return;
+        }
+        
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Complete Payment");
+        dialog.setHeaderText(null);
+        
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(24));
+        content.setStyle("-fx-background-color: #FFFFFF;");
+        
+        // Order Summary Section
+        VBox summaryBox = new VBox(12);
+        summaryBox.setPadding(new Insets(20));
+        summaryBox.setStyle(
+            "-fx-background-color: #F8FAFC; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1.5; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 6, 0, 0, 1);"
+        );
+        
+        Label summaryTitle = new Label("Order Summary");
+        summaryTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
+        summaryTitle.setStyle("-fx-text-fill: #1E293B;");
+        
+        // Product details
+        HBox productRow = new HBox(15);
+        productRow.setAlignment(Pos.CENTER_LEFT);
+        Label productLabel = new Label("Product:");
+        productLabel.setStyle("-fx-text-fill: #64748B; -fx-min-width: 80;");
+        Label productValue = new Label(productName);
+        productValue.setFont(Font.font("System", FontWeight.SEMI_BOLD, 14));
+        productValue.setStyle("-fx-text-fill: #1E293B;");
+        productRow.getChildren().addAll(productLabel, productValue);
+        
+        // Amount details
+        HBox amountRow = new HBox(15);
+        amountRow.setAlignment(Pos.CENTER_LEFT);
+        Label amountLabel = new Label("Amount:");
+        amountLabel.setStyle("-fx-text-fill: #64748B; -fx-min-width: 80;");
+        Label amountValue = new Label(price);
+        amountValue.setFont(Font.font("System", FontWeight.BOLD, 16));
+        amountValue.setStyle("-fx-text-fill: #FFD700;");
+        amountRow.getChildren().addAll(amountLabel, amountValue);
+        
+        summaryBox.getChildren().addAll(summaryTitle, productRow, amountRow);
+        
+        // Payment Method Section
+        VBox paymentBox = new VBox(12);
+        paymentBox.setPadding(new Insets(20));
+        paymentBox.setStyle(
+            "-fx-background-color: #FFFFFF; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1.5; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 6, 0, 0, 1);"
+        );
+        
+        Label paymentTitle = new Label("Payment Method");
+        paymentTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
+        paymentTitle.setStyle("-fx-text-fill: #1E293B;");
+        
+        // Virtual Card Display
+        VBox cardDisplay = new VBox(8);
+        cardDisplay.setPadding(new Insets(14));
+        cardDisplay.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107); " +
+            "-fx-background-radius: 10; " +
+            "-fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.15), 8, 0, 0, 3);"
+        );
+        
+        Label bankLabel = new Label("Azure Digital Wallet");
+        bankLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        bankLabel.setStyle("-fx-text-fill: white;");
+        
+        final String cardNumber = user.getVirtualBankNumber() != null ? 
+            CardUtil.formatCardNumber(user.getVirtualBankNumber()) : "4532 1234 5678 3456";
+        Label cardLabel = new Label(cardNumber);
+        cardLabel.setFont(Font.font("System", FontWeight.EXTRA_BOLD, 16));
+        cardLabel.setStyle("-fx-text-fill: white;");
+        
+        HBox cardDetailsRow = new HBox(20);
+        Label expiryLabel = new Label("EXPIRY: " + (user.getCardExpiryDate() != null ? user.getCardExpiryDate() : "11/30"));
+        expiryLabel.setFont(Font.font("System", 10));
+        expiryLabel.setStyle("-fx-text-fill: white;");
+        Label cvvLabel = new Label("CVV: •••");
+        cvvLabel.setFont(Font.font("System", 10));
+        cvvLabel.setStyle("-fx-text-fill: white;");
+        cardDetailsRow.getChildren().addAll(expiryLabel, cvvLabel);
+        
+        cardDisplay.getChildren().addAll(bankLabel, cardLabel, cardDetailsRow);
+        
+        // CVV Verification Section
+        VBox cvvBox = new VBox(10);
+        cvvBox.setPadding(new Insets(14));
+        cvvBox.setStyle(
+            "-fx-background-color: #FEF3C7; " +
+            "-fx-border-color: #FCD34D; " +
+            "-fx-border-radius: 10; " +
+            "-fx-border-width: 1.5;"
+        );
+        
+        Label cvvPrompt = new Label("Enter CVV for verification");
+        cvvPrompt.setFont(Font.font("System", FontWeight.BOLD, 13));
+        cvvPrompt.setStyle("-fx-text-fill: #92400E;");
+        
+        PasswordField cvvField = new PasswordField();
+        cvvField.setPromptText("Enter 3-digit CVV");
+        cvvField.setStyle(
+            "-fx-padding: 12; " +
+            "-fx-border-color: #FCD34D; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-width: 2; " +
+            "-fx-font-size: 16; " +
+            "-fx-font-family: 'Courier New';"
+        );
+        cvvField.setPrefHeight(40);
+        cvvField.setMaxWidth(150);
+        
+        Label cvvWarning = new Label("✓ Secure 3-digit code on back of card");
+        cvvWarning.setFont(Font.font("System", 11));
+        cvvWarning.setStyle("-fx-text-fill: #78350F;");
+        
+        cvvBox.getChildren().addAll(cvvPrompt, cvvField, cvvWarning);
+        
+        paymentBox.getChildren().addAll(paymentTitle, cardDisplay, cvvBox);
+        
+        // Security Notice
+        VBox securityBox = new VBox(8);
+        securityBox.setPadding(new Insets(12));
+        securityBox.setStyle(
+            "-fx-background-color: #EFF6FF; " +
+            "-fx-border-color: #BFDBFE; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-width: 1;"
+        );
+        
+        Label securityIcon = new Label("🔒");
+        Label securityText = new Label("Your payment is secure and encrypted");
+        securityText.setFont(Font.font("System", 12));
+        securityText.setStyle("-fx-text-fill: #1E40AF;");
+        securityText.setWrapText(true);
+        
+        HBox securityRow = new HBox(8);
+        securityRow.getChildren().addAll(securityIcon, securityText);
+        securityBox.getChildren().add(securityRow);
+        
+        content.getChildren().addAll(summaryBox, paymentBox, securityBox);
+        
+        dialog.getDialogPane().setContent(content);
+        
+        // Buttons
+        ButtonType confirmButton = new ButtonType("Pay Now", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(confirmButton, cancelButton);
+        
+        // Disable Pay button until CVV is entered
+        javafx.scene.Node payButton = dialog.getDialogPane().lookupButton(confirmButton);
+        payButton.setDisable(true);
+        
+        // Validate CVV entry
+        cvvField.textProperty().addListener((obs, oldVal, newVal) -> {
+            String correctCVV = user.getCardCVV() != null ? user.getCardCVV() : "123";
+            boolean isValid = newVal.length() == 3 && newVal.matches("\\d{3}");
+            payButton.setDisable(!isValid);
+        });
+        
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(480);
+        dialog.getDialogPane().setPrefHeight(650);
+        
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == confirmButton) {
+                String enteredCVV = cvvField.getText().trim();
+                String correctCVV = user.getCardCVV() != null ? user.getCardCVV() : "123";
+                
+                // Verify CVV
+                if (!enteredCVV.equals(correctCVV)) {
+                    showAlert("Payment Failed", "Invalid CVV. Payment declined.", Alert.AlertType.ERROR);
+                    return;
+                }
+                
+                // Check balance
+                if (user.getBalance() < priceAmount) {
+                    showAlert("Insufficient Balance", 
+                        String.format("You need ₱%d but only have ₱%.2f in your account.", 
+                        priceAmount, user.getBalance()), 
+                        Alert.AlertType.ERROR);
+                    return;
+                }
+                
+                // Process payment using withdraw method
+                user.withdraw(priceAmount);
+                azureApp.getFileManager().saveUsers(azureApp.getUsers());
+                
+                // Show success dialog with transaction details
+                showPaymentSuccessDialog(productName, price, cardNumber);
+            }
+        });
+    }
+    
+    private void showPaymentSuccessDialog(String productName, String price, String cardNumber) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Payment Successful");
+        dialog.setHeaderText(null);
+        
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(24));
+        content.setAlignment(Pos.TOP_CENTER);
+        content.setStyle("-fx-background-color: #FFFFFF;");
+        
+        // Success icon and message
+        VBox successBox = new VBox(12);
+        successBox.setAlignment(Pos.CENTER);
+        
+        Label checkmark = new Label("✓");
+        checkmark.setFont(Font.font("System", FontWeight.BOLD, 64));
+        checkmark.setStyle(
+            "-fx-text-fill: #10B981; " +
+            "-fx-alignment: center;"
+        );
+        
+        Label successTitle = new Label("Payment Successful!");
+        successTitle.setFont(Font.font("System", FontWeight.BOLD, 20));
+        successTitle.setStyle("-fx-text-fill: #10B981;");
+        
+        Label successMsg = new Label("Your purchase has been completed");
+        successMsg.setFont(Font.font("System", 14));
+        successMsg.setStyle("-fx-text-fill: #6B7280;");
+        
+        successBox.getChildren().addAll(checkmark, successTitle, successMsg);
+        
+        // Receipt Section
+        VBox receiptBox = new VBox(14);
+        receiptBox.setPadding(new Insets(20));
+        receiptBox.setStyle(
+            "-fx-background-color: #F8FAFC; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1.5;"
+        );
+        
+        Label receiptTitle = new Label("Receipt Details");
+        receiptTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+        receiptTitle.setStyle("-fx-text-fill: #1E293B;");
+        
+        // Receipt items
+        HBox productReceiptRow = new HBox(15);
+        Label productReceiptLabel = new Label("Product:");
+        productReceiptLabel.setPrefWidth(80);
+        productReceiptLabel.setStyle("-fx-text-fill: #64748B;");
+        Label productReceiptValue = new Label(productName);
+        productReceiptValue.setStyle("-fx-text-fill: #1E293B;");
+        productReceiptRow.getChildren().addAll(productReceiptLabel, productReceiptValue);
+        
+        HBox amountReceiptRow = new HBox(15);
+        Label amountReceiptLabel = new Label("Amount:");
+        amountReceiptLabel.setPrefWidth(80);
+        amountReceiptLabel.setStyle("-fx-text-fill: #64748B;");
+        Label amountReceiptValue = new Label(price);
+        amountReceiptValue.setFont(Font.font("System", FontWeight.BOLD, 14));
+        amountReceiptValue.setStyle("-fx-text-fill: #FFD700;");
+        amountReceiptRow.getChildren().addAll(amountReceiptLabel, amountReceiptValue);
+        
+        HBox cardReceiptRow = new HBox(15);
+        Label cardReceiptLabel = new Label("Card:");
+        cardReceiptLabel.setPrefWidth(80);
+        cardReceiptLabel.setStyle("-fx-text-fill: #64748B;");
+        Label cardReceiptValue = new Label(cardNumber);
+        cardReceiptValue.setFont(Font.font("System", 12));
+        cardReceiptValue.setStyle("-fx-text-fill: #1E293B;");
+        cardReceiptRow.getChildren().addAll(cardReceiptLabel, cardReceiptValue);
+        
+        HBox timeReceiptRow = new HBox(15);
+        Label timeReceiptLabel = new Label("Time:");
+        timeReceiptLabel.setPrefWidth(80);
+        timeReceiptLabel.setStyle("-fx-text-fill: #64748B;");
+        Label timeReceiptValue = new Label(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+        timeReceiptValue.setStyle("-fx-text-fill: #1E293B;");
+        timeReceiptRow.getChildren().addAll(timeReceiptLabel, timeReceiptValue);
+        
+        receiptBox.getChildren().addAll(
+            receiptTitle,
+            productReceiptRow,
+            amountReceiptRow,
+            cardReceiptRow,
+            timeReceiptRow
+        );
+        
+        // Confirmation message
+        Label confirmMsg = new Label(
+            "A verification code has been sent to your registered email.\n" +
+            "Check your email for the product code and activation details."
+        );
+        confirmMsg.setFont(Font.font("System", 12));
+        confirmMsg.setStyle("-fx-text-fill: #475569; -fx-padding: 12;");
+        confirmMsg.setWrapText(true);
+        confirmMsg.setStyle(
+            "-fx-background-color: #E0F2FE; " +
+            "-fx-padding: 12; " +
+            "-fx-border-color: #7DD3FC; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-width: 1; " +
+            "-fx-text-fill: #0369A1;"
+        );
+        
+        content.getChildren().addAll(successBox, receiptBox, confirmMsg);
+        
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(new ButtonType("Done", ButtonBar.ButtonData.OK_DONE));
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(480);
+        dialog.getDialogPane().setPrefHeight(600);
+        
+        dialog.showAndWait();
+    }
+    
     private void showCardDetailsDialog(UserAccount user, String vbn, String expiryDate) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Virtual Card Details");
@@ -3868,6 +4867,24 @@ public class MainApp extends Application {
         
         ButtonType okButton = new ButtonType("Close", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().add(okButton);
+        
+        // Initialize card CVV if not already set (first time only)
+        String cardCVV = user.getCardCVV();
+        if (cardCVV == null || cardCVV.isBlank()) {
+            cardCVV = String.format("%03d", 100 + (int)(Math.random() * 900));
+            user.setCardCVV(cardCVV);
+        }
+        
+        // Initialize card expiry date if not already set (first time only)
+        String cardExpiryDate = user.getCardExpiryDate();
+        if (cardExpiryDate == null || cardExpiryDate.isBlank()) {
+            if (expiryDate == null || expiryDate.isBlank()) {
+                cardExpiryDate = "11/30"; // Default expiry
+            } else {
+                cardExpiryDate = expiryDate;
+            }
+            user.setCardExpiryDate(cardExpiryDate);
+        }
         
         // Create card details display
         VBox content = new VBox(20);
@@ -3906,15 +4923,13 @@ public class MainApp extends Application {
         holderName.setFont(Font.font("System", FontWeight.BOLD, 12));
         holderName.setStyle("-fx-text-fill: white;");
         
-        // Expiry and CVV
+        // Expiry and CVV (now using persistent values)
         HBox detailsRow = new HBox(30);
-        Label expiryInfo = new Label("EXPIRY: " + expiryDate);
+        Label expiryInfo = new Label("EXPIRY: " + cardExpiryDate);
         expiryInfo.setFont(Font.font("System", 11));
         expiryInfo.setStyle("-fx-text-fill: white;");
         
-        // Generate a random CVV for display
-        int cvv = 100 + (int)(Math.random() * 900);
-        Label cvvInfo = new Label("CVV: " + cvv);
+        Label cvvInfo = new Label("CVV: " + cardCVV);
         cvvInfo.setFont(Font.font("System", 11));
         cvvInfo.setStyle("-fx-text-fill: white;");
         
@@ -3941,13 +4956,13 @@ public class MainApp extends Application {
             "Card Number: %s\n" +
             "Cardholder: %s\n" +
             "Expiry Date: %s\n" +
-            "CVV: %d\n" +
+            "CVV: %s\n" +
             "Card Type: Mastercard\n" +
             "Status: Active",
             fullCardNumber,
             user != null ? user.getUsername().toUpperCase() : "CARDHOLDER",
-            expiryDate,
-            cvv
+            cardExpiryDate,
+            cardCVV
         );
         
         Label infoText = new Label(cardInfo);

@@ -18,6 +18,8 @@ public class UserAccount {
     private String transactionPin;
     private String loyaltyTier = "Classic";
     private String virtualBankNumber;
+    private String cardCVV;
+    private String cardExpiryDate;
 
 
     public UserAccount(String username, String pin, String mobile) {
@@ -70,6 +72,10 @@ public class UserAccount {
     public String getLoyaltyTier() { return loyaltyTier; }
     public void setVirtualBankNumber(String vbn) { this.virtualBankNumber = vbn; }
     public String getVirtualBankNumber() { return virtualBankNumber; }
+    public void setCardCVV(String cvv) { this.cardCVV = cvv; }
+    public String getCardCVV() { return cardCVV; }
+    public void setCardExpiryDate(String expiryDate) { this.cardExpiryDate = expiryDate; }
+    public String getCardExpiryDate() { return cardExpiryDate; }
     public String getUsername() { return username; }
     public String getMobile() { return mobile; }
     public double getBalance() { return balance; }

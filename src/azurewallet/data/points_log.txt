@@ -33,3 +33,4 @@
 2025-11-24T00:50:05.514847900 - cess earned 50 points (Deposit via BPI (ref AZR-223089))
 2025-11-24T22:35:56.900733300 - wowi earned 68 points (Deposit via GCash (ref AZR-165022))
 2025-11-24T23:05:32.217225400 - cessmoto earned 100 points (Deposit via GCash (ref AZR-669286))
+2025-11-25T13:06:55.695743 - qwe earned 50 points (Deposit via BPI (ref AZR-342784))
