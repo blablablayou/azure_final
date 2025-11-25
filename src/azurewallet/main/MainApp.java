@@ -114,12 +114,12 @@ public class MainApp extends Application {
         
         Label logo = new Label("Azure");
         logo.setFont(Font.font("System", FontWeight.BOLD, 36));
-        logo.setStyle("-fx-text-fill: #2563EB;");
+        logo.setStyle("-fx-text-fill: #FFD700;");
         
             // App title above the welcome box — use Windows 'Cambria' as a close display serif
             Label appTitle = new Label("Azure Digital Wallet");
             appTitle.setFont(Font.font("Cambria", FontWeight.BOLD, 36));
-            appTitle.setStyle("-fx-font-family: 'Cambria'; -fx-text-fill: #2563EB;");
+            appTitle.setStyle("-fx-font-family: 'Cambria'; -fx-text-fill: #FFD700;");
             // Welcome title and login form
             VBox welcomeBox = new VBox(6);
             welcomeBox.setAlignment(Pos.CENTER);
@@ -143,17 +143,17 @@ public class MainApp extends Application {
             Button signInBtn = createPrimaryButton("Sign In");
             // remove the blue outline/border and ensure a flat rounded blue button
             signInBtn.setStyle(
-                "-fx-background-color: #2563EB; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
+                "-fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
             );
             // Override hover handlers (createPrimaryButton registers its own) to keep border transparent
             signInBtn.setOnMouseEntered(e ->
                 signInBtn.setStyle(
-                    "-fx-background-color: #1E40AF; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
+                    "-fx-background-color: #FFA500; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
                 )
             );
             signInBtn.setOnMouseExited(e ->
                 signInBtn.setStyle(
-                    "-fx-background-color: #2563EB; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
+                    "-fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
                 )
             );
             signInBtn.setOnAction(e -> handleLogin(usernameField, pinField));
@@ -164,9 +164,18 @@ public class MainApp extends Application {
         Label noAccount = new Label("Don't have an account?");
         noAccount.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
         Hyperlink signUpLink = new Hyperlink("Sign Up");
-        signUpLink.setStyle("-fx-text-fill: #2563EB; -fx-font-size: 13; -fx-font-weight: bold;");
+        signUpLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
         signUpLink.setOnAction(e -> showRegistrationScreen());
         signUpRow.getChildren().addAll(noAccount, signUpLink);
+        
+        HBox forgotRow = new HBox(5);
+        forgotRow.setAlignment(Pos.CENTER);
+        Label forgotLabel = new Label("Forgot your PIN?");
+        forgotLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
+        Hyperlink forgotLink = new Hyperlink("Reset it");
+        forgotLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
+        forgotLink.setOnAction(e -> showForgotPinDialog());
+        forgotRow.getChildren().addAll(forgotLabel, forgotLink);
         
         Button adminBtn = new Button("Admin Login");
         adminBtn.setStyle(
@@ -181,7 +190,10 @@ public class MainApp extends Application {
         
         HBox bottomRow = new HBox(12);
         bottomRow.setAlignment(Pos.CENTER);
-        bottomRow.getChildren().addAll(signUpRow, adminBtn);
+        VBox linkBox = new VBox(8);
+        linkBox.setAlignment(Pos.CENTER);
+        linkBox.getChildren().addAll(signUpRow, forgotRow);
+        bottomRow.getChildren().addAll(linkBox, adminBtn);
 
         // Add a global Ctrl+F accelerator to open admin login while keeping the button hidden
         if (scene != null) {
@@ -229,6 +241,161 @@ public class MainApp extends Application {
                 Alert.AlertType.ERROR);
             pinField.clear();
         }
+    }
+    
+    private void showForgotPinDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Reset Your PIN");
+        dialog.setHeaderText("Verify your account to reset PIN");
+        
+        // Create a card-style container
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(16);
+        grid.setPadding(new Insets(24));
+        grid.setStyle("-fx-background-color: white; -fx-background-radius: 14;");
+        
+        // Set up columns
+        ColumnConstraints leftCol = new ColumnConstraints();
+        leftCol.setMinWidth(120);
+        leftCol.setPrefWidth(140);
+        leftCol.setHgrow(Priority.NEVER);
+        ColumnConstraints rightCol = new ColumnConstraints();
+        rightCol.setHgrow(Priority.ALWAYS);
+        grid.getColumnConstraints().addAll(leftCol, rightCol);
+        
+        // Info label
+        Label infoLabel = new Label("Enter your details to verify your account and reset your PIN");
+        infoLabel.setFont(Font.font("System", 13));
+        infoLabel.setStyle("-fx-text-fill: #64748B; -fx-wrap-text: true;");
+        infoLabel.setWrapText(true);
+        grid.add(infoLabel, 0, 0, 2, 1);
+        GridPane.setMargin(infoLabel, new Insets(0, 0, 8, 0));
+        
+        // Username field
+        Label usernameLabel = new Label("Username");
+        usernameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        usernameLabel.setStyle("-fx-text-fill: #374151;");
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Enter your username");
+        usernameField.setStyle("-fx-padding: 10 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB; -fx-font-size: 13;");
+        usernameField.setMinHeight(40);
+        grid.add(usernameLabel, 0, 1);
+        grid.add(usernameField, 1, 1);
+        
+        // Mobile Number field
+        Label mobileLabel = new Label("Mobile Number");
+        mobileLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        mobileLabel.setStyle("-fx-text-fill: #374151;");
+        TextField mobileField = new TextField();
+        mobileField.setPromptText("09XXXXXXXXX (registered)");
+        mobileField.setStyle("-fx-padding: 10 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB; -fx-font-size: 13;");
+        mobileField.setMinHeight(40);
+        grid.add(mobileLabel, 0, 2);
+        grid.add(mobileField, 1, 2);
+        
+        // New PIN field
+        Label newPinLabel = new Label("New PIN");
+        newPinLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        newPinLabel.setStyle("-fx-text-fill: #374151;");
+        PasswordField newPinField = new PasswordField();
+        newPinField.setPromptText("Enter new 4-digit PIN");
+        newPinField.setStyle("-fx-padding: 10 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB; -fx-font-size: 13;");
+        newPinField.setMinHeight(40);
+        // Restrict to 4 digits
+        newPinField.textProperty().addListener((obs, oldV, newV) -> {
+            if (!newV.matches("\\d{0,4}")) {
+                newPinField.setText(oldV);
+            }
+        });
+        grid.add(newPinLabel, 0, 3);
+        grid.add(newPinField, 1, 3);
+        
+        // Confirm PIN field
+        Label confirmPinLabel = new Label("Confirm PIN");
+        confirmPinLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        confirmPinLabel.setStyle("-fx-text-fill: #374151;");
+        PasswordField confirmPinField = new PasswordField();
+        confirmPinField.setPromptText("Confirm your new PIN");
+        confirmPinField.setStyle("-fx-padding: 10 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB; -fx-font-size: 13;");
+        confirmPinField.setMinHeight(40);
+        // Restrict to 4 digits
+        confirmPinField.textProperty().addListener((obs, oldV, newV) -> {
+            if (!newV.matches("\\d{0,4}")) {
+                confirmPinField.setText(oldV);
+            }
+        });
+        grid.add(confirmPinLabel, 0, 4);
+        grid.add(confirmPinField, 1, 4);
+        
+        // Hint text
+        Label hintLabel = new Label("PIN must be exactly 4 digits");
+        hintLabel.setFont(Font.font("System", 11));
+        hintLabel.setStyle("-fx-text-fill: #94A3B8; -fx-italic: true;");
+        grid.add(hintLabel, 0, 5, 2, 1);
+        GridPane.setMargin(hintLabel, new Insets(8, 0, 0, 0));
+        
+        // Wrap in a container with shadow effect
+        VBox wrapper = new VBox(grid);
+        wrapper.setPadding(new Insets(12));
+        wrapper.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 14;");
+        
+        dialog.getDialogPane().setContent(wrapper);
+        
+        ButtonType resetBtnType = new ButtonType("Reset PIN", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(resetBtnType, ButtonType.CANCEL);
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(480);
+        
+        // Style the buttons
+        javafx.scene.Node resetButton = dialog.getDialogPane().lookupButton(resetBtnType);
+        resetButton.setStyle("-fx-background-color: #FFD700; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 32; -fx-font-size: 13;");
+        javafx.scene.Node cancelButton = dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelButton.setStyle("-fx-background-color: #E5E7EB; -fx-text-fill: #374151; -fx-font-weight: bold; -fx-padding: 10 32; -fx-font-size: 13;");
+        
+        // Enable/disable reset button based on validation
+        resetButton.setDisable(true);
+        Runnable validate = () -> {
+            boolean valid = !usernameField.getText().trim().isEmpty() && 
+                           !mobileField.getText().trim().isEmpty() && 
+                           newPinField.getText().length() == 4 && 
+                           confirmPinField.getText().length() == 4 &&
+                           newPinField.getText().equals(confirmPinField.getText());
+            resetButton.setDisable(!valid);
+        };
+        
+        usernameField.textProperty().addListener((o, oldV, newV) -> validate.run());
+        mobileField.textProperty().addListener((o, oldV, newV) -> validate.run());
+        newPinField.textProperty().addListener((o, oldV, newV) -> validate.run());
+        confirmPinField.textProperty().addListener((o, oldV, newV) -> validate.run());
+        
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == resetBtnType) {
+                String username = usernameField.getText().trim();
+                String mobile = mobileField.getText().trim();
+                String newPin = newPinField.getText().trim();
+                
+                // Verify user exists and mobile matches
+                UserAccount user = azureApp.getUser(username);
+                if (user == null) {
+                    showAlert("Error", "Username not found.", Alert.AlertType.ERROR);
+                    return;
+                }
+                
+                if (!user.getMobile().equals(mobile)) {
+                    showAlert("Error", "Mobile number does not match our records.", Alert.AlertType.ERROR);
+                    return;
+                }
+                
+                // Reset the PIN (without requiring current PIN verification)
+                user.resetPin(newPin);
+                azureApp.getFileManager().saveUsers(azureApp.getUsers());
+                showAlert("Success", 
+                    "Your PIN has been reset successfully!\nYou can now login with your new PIN.", 
+                    Alert.AlertType.INFORMATION);
+                showLoginScreen();
+            }
+        });
     }
     
     // ==================== REGISTRATION SCREEN ====================
@@ -288,7 +455,7 @@ public class MainApp extends Application {
         registerBtn.setOnAction(e -> handleRegistration(usernameField, mobileField, pinField));
         // Remove blue border for Register button, keep blue background
         registerBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -296,7 +463,7 @@ public class MainApp extends Application {
             "-fx-cursor: hand;"
         );
         registerBtn.setOnMouseEntered(e -> registerBtn.setStyle(
-            "-fx-background-color: #1E40AF; " +
+            "-fx-background-color: #FFA500; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -304,7 +471,7 @@ public class MainApp extends Application {
             "-fx-cursor: hand;"
         ));
         registerBtn.setOnMouseExited(e -> registerBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -318,7 +485,7 @@ public class MainApp extends Application {
         Label hasAccount = new Label("Already have an account?");
         hasAccount.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
         Hyperlink loginLink = new Hyperlink("Sign In");
-        loginLink.setStyle("-fx-text-fill: #2563EB; -fx-font-size: 13; -fx-font-weight: bold;");
+        loginLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
         loginLink.setOnAction(e -> showLoginScreen());
         backRow.getChildren().addAll(hasAccount, loginLink);
         
@@ -400,7 +567,7 @@ public class MainApp extends Application {
         
         // User avatar: larger, crisper circle with centered white user icon
         Circle avatar = new Circle(26);
-        avatar.setFill(Color.web("#2563EB"));
+        avatar.setFill(Color.web("#FFD700"));
         // subtle border to make the avatar edge crisp
         avatar.setStroke(Color.web("#e5e7eb"));
         avatar.setStrokeWidth(1.5);
@@ -445,7 +612,7 @@ public class MainApp extends Application {
         accountMenu.getItems().addAll(logoutItem);
         accountMenu.setText("Account ▾");
         accountMenu.setStyle(
-            "-fx-background-color: white; -fx-text-fill: #2563EB; " +
+            "-fx-background-color: white; -fx-text-fill: #FFD700; " +
             "-fx-font-size: 12; -fx-font-weight: bold; " +
             "-fx-background-radius: 10; -fx-border-radius: 10; " +
             "-fx-border-color: #E2E8F0; -fx-padding: 8 12; -fx-cursor: hand;"
@@ -461,7 +628,7 @@ public class MainApp extends Application {
         card.setPrefHeight(220);
         // Add blue gradient background with border and shadow
         card.setStyle(
-            "-fx-background-color: linear-gradient(to bottom right, #2563EB, #3B82F6); " +
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107); " +
             "-fx-background-radius: 12; " +
             "-fx-border-radius: 12; " +
             "-fx-border-color: rgba(37,99,235,0.18); " +
@@ -516,13 +683,14 @@ public class MainApp extends Application {
         VBox transferBtn = createActionButton(buildIcon("transfer"), "Transfer", e -> showTransferDialog());
         VBox voucherBtn = createActionButton(buildIcon("voucher"), "Voucher", e -> showVoucherDialog());
         VBox payBtn = createActionButton(buildIcon("pay"), "Pay", e -> showPayOnlineDialog());
+        VBox vCardBtn = createActionButton(buildIcon("vcard"), "V-Card", e -> showVCardDialog());
         VBox pointsBtn = createActionButton(buildIcon("points"), "Points", e -> showRedeemPointsDialog());
         VBox billsBtn = createActionButton(buildIcon("bills"), "Bills", e -> showBillsDialog());
         VBox loadBtn = createActionButton(buildIcon("load"), "Load", e -> showBuyLoadDialog());
 
         final java.util.List<VBox> btns = java.util.Arrays.asList(
             depositBtn, withdrawBtn, transferBtn, voucherBtn,
-            payBtn, pointsBtn, billsBtn, loadBtn
+            payBtn, vCardBtn, pointsBtn, billsBtn, loadBtn
         );
 
         // Collapsible behavior: show first 3 buttons + Show more tile initially
@@ -585,15 +753,13 @@ public class MainApp extends Application {
                     grid.add(b, col, row);
                     GridPane.setMargin(b, new Insets(6));
                 }
-                // Add the Show less tile under the "Load" button (column 3)
-                int rowsUsed = (btns.size() + 3) / 4; // number of rows currently used
-                GridPane.setHgrow(showLessBox, Priority.NEVER);
+                // Add the Show less tile: column 3 (aligned with Load) on row 2 (under Bills)
+                int showLessRow = 2;
+                GridPane.setHgrow(showLessBox, Priority.ALWAYS);
                 showLessBox.setMaxWidth(Double.MAX_VALUE);
-                // Place directly under the last column (index 3) on the next row
-                grid.add(showLessBox, 3, rowsUsed);
+                // Place at column 3 to align with Load, row 2 to be under Bills
+                grid.add(showLessBox, 3, showLessRow);
                 GridPane.setMargin(showLessBox, new Insets(6));
-                // Align the tile centered within its column cell
-                GridPane.setHalignment(showLessBox, javafx.geometry.HPos.CENTER);
             }
         };
 
@@ -629,8 +795,8 @@ public class MainApp extends Application {
         Button iconBtn = new Button(icon);
         iconBtn.setFont(Font.font(24));
         iconBtn.setStyle(
-            "-fx-background-color: #2563EB; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #2563EB; " +
+            "-fx-background-color: #FFD700; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);"
         );
@@ -639,14 +805,14 @@ public class MainApp extends Application {
         
         // Hover effect: slightly darker blue on hover
         iconBtn.setOnMouseEntered(e -> iconBtn.setStyle(
-            "-fx-background-color: #1E40AF; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #1E40AF; " +
+            "-fx-background-color: #FFA500; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFA500; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(37,99,235,0.3), 8, 0, 0, 3);"
         ));
         iconBtn.setOnMouseExited(e -> iconBtn.setStyle(
-            "-fx-background-color: #2563EB; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #2563EB; " +
+            "-fx-background-color: #FFD700; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);"
         ));
@@ -668,8 +834,8 @@ public class MainApp extends Application {
         Button iconBtn = new Button();
         iconBtn.setGraphic(iconGraphic);
         iconBtn.setStyle(
-            "-fx-background-color: #2563EB; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #2563EB; " +
+            "-fx-background-color: #FFD700; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);"
         );
@@ -678,14 +844,14 @@ public class MainApp extends Application {
 
         // Hover effect
         iconBtn.setOnMouseEntered(e -> iconBtn.setStyle(
-            "-fx-background-color: #1E40AF; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #1E40AF; " +
+            "-fx-background-color: #FFA500; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFA500; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(37,99,235,0.3), 8, 0, 0, 3);"
         ));
         iconBtn.setOnMouseExited(e -> iconBtn.setStyle(
-            "-fx-background-color: #2563EB; -fx-text-fill: white; " +
-            "-fx-background-radius: 12; -fx-border-color: #2563EB; " +
+            "-fx-background-color: #FFD700; -fx-text-fill: white; " +
+            "-fx-background-radius: 12; -fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; -fx-border-radius: 12; -fx-cursor: hand; " +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);"
         ));
@@ -712,9 +878,9 @@ public class MainApp extends Application {
                 coin3.setFill(Color.WHITE);
                 // Plus sign on top coin
                 Rectangle hLine = new Rectangle(7, 7.5, 4, 1);
-                hLine.setFill(Color.web("#2563EB"));
+                hLine.setFill(Color.web("#FFD700"));
                 Rectangle vLine = new Rectangle(8.5, 6, 1, 4);
-                vLine.setFill(Color.web("#2563EB"));
+                vLine.setFill(Color.web("#FFD700"));
                 Group g = new Group(coin1, coin2, coin3, hLine, vLine);
                 return createIconWrapper(g);
             }
@@ -724,7 +890,7 @@ public class MainApp extends Application {
                 wallet.setArcWidth(3); wallet.setArcHeight(3);
                 wallet.setFill(Color.WHITE);
                 Rectangle fold = new Rectangle(3, 9, 12, 1);
-                fold.setFill(Color.web("#2563EB"));
+                fold.setFill(Color.web("#FFD700"));
                 // Money bills sticking out
                 Rectangle bill1 = new Rectangle(13, 4, 3, 6);
                 bill1.setFill(Color.web("#10B981"));
@@ -760,14 +926,14 @@ public class MainApp extends Application {
                 ticket.setFill(Color.WHITE);
                 // Perforated edges
                 Circle perf1 = new Circle(2, 9, 1);
-                perf1.setFill(Color.web("#2563EB"));
+                perf1.setFill(Color.web("#FFD700"));
                 Circle perf2 = new Circle(16, 9, 1);
-                perf2.setFill(Color.web("#2563EB"));
+                perf2.setFill(Color.web("#FFD700"));
                 // Decorative lines
                 Rectangle line1 = new Rectangle(5, 7, 8, 1);
-                line1.setFill(Color.web("#2563EB"));
+                line1.setFill(Color.web("#FFD700"));
                 Rectangle line2 = new Rectangle(5, 10, 6, 1);
-                line2.setFill(Color.web("#2563EB"));
+                line2.setFill(Color.web("#FFD700"));
                 Group g = new Group(ticket, perf1, perf2, line1, line2);
                 return createIconWrapper(g);
             }
@@ -805,9 +971,9 @@ public class MainApp extends Application {
                 doc3.setFill(Color.WHITE);
                 // Text lines on top document
                 Rectangle line1 = new Rectangle(6, 6, 6, 1);
-                line1.setFill(Color.web("#2563EB"));
+                line1.setFill(Color.web("#FFD700"));
                 Rectangle line2 = new Rectangle(6, 8, 5, 1);
-                line2.setFill(Color.web("#2563EB"));
+                line2.setFill(Color.web("#FFD700"));
                 Rectangle line3 = new Rectangle(6, 10, 4, 1);
                 line3.setFill(Color.web("#6B7280"));
                 Group g = new Group(doc1, doc2, doc3, line1, line2, line3);
@@ -832,6 +998,20 @@ public class MainApp extends Application {
                 Circle homeBtn = new Circle(9, 15.5, 0.8);
                 homeBtn.setFill(Color.web("#6B7280"));
                 Group g = new Group(phone, screen, bar1, bar2, bar3, homeBtn);
+                return createIconWrapper(g);
+            }
+            case "vcard": {
+                // Credit card icon
+                Rectangle card = new Rectangle(3, 5, 12, 10);
+                card.setArcWidth(2); card.setArcHeight(2);
+                card.setFill(Color.WHITE);
+                // Chip
+                Rectangle chip = new Rectangle(5, 7, 3, 3);
+                chip.setFill(Color.web("#FFD700"));
+                // Magnetic stripe
+                Rectangle stripe = new Rectangle(3, 13, 12, 1.5);
+                stripe.setFill(Color.web("#1F2937"));
+                Group g = new Group(card, chip, stripe);
                 return createIconWrapper(g);
             }
             case "more": {
@@ -962,7 +1142,7 @@ public class MainApp extends Application {
             return;
         }
         if (node instanceof Label) {
-            ((Label) node).setStyle("-fx-text-fill: " + (color.equals(Color.web("#2563EB")) ? "#2563EB" : "#94A3B8") + ";");
+            ((Label) node).setStyle("-fx-text-fill: " + (color.equals(Color.web("#FFD700")) ? "#FFD700" : "#94A3B8") + ";");
         }
     }
     
@@ -1038,7 +1218,7 @@ public class MainApp extends Application {
             "-fx-padding: 8 14; " +
             "-fx-font-size: 12; " +
             "-fx-font-weight: bold; " +
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-border-radius: 6; " +
             "-fx-background-radius: 6; " +
@@ -1048,7 +1228,7 @@ public class MainApp extends Application {
             "-fx-padding: 8 14; " +
             "-fx-font-size: 12; " +
             "-fx-font-weight: bold; " +
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-border-radius: 6; " +
             "-fx-background-radius: 6; " +
@@ -1340,7 +1520,7 @@ public class MainApp extends Application {
             if (active) {
                 Circle ring = new Circle(radius + 6);
                 ring.setFill(Color.TRANSPARENT);
-                ring.setStroke(Color.web("#2563EB"));
+                ring.setStroke(Color.web("#FFD700"));
                 ring.setStrokeWidth(2);
                 badge = new StackPane(ring, dot);
                 badge.setPadding(new Insets(6));
@@ -1398,29 +1578,29 @@ public class MainApp extends Application {
 
         Label iconLabel = new Label(icon);
         iconLabel.setFont(Font.font(20));
-        iconLabel.setStyle("-fx-text-fill: " + (active ? "#2563EB" : "#94A3B8") + ";");
+        iconLabel.setStyle("-fx-text-fill: " + (active ? "#FFD700" : "#94A3B8") + ";");
 
         Label textLabel = new Label(label);
         textLabel.setFont(Font.font("System", 11));
-        textLabel.setStyle("-fx-text-fill: " + (active ? "#2563EB" : "#94A3B8") + ";");
+        textLabel.setStyle("-fx-text-fill: " + (active ? "#FFD700" : "#94A3B8") + ";");
 
         // Indicator bar shown when active (animated)
         Region indicator = new Region();
         indicator.setPrefHeight(3);
         indicator.setMaxWidth(36);
-        indicator.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 2;");
+        indicator.setStyle("-fx-background-color: #FFD700; -fx-background-radius: 2;");
         indicator.setOpacity(active ? 1.0 : 0.0);
 
         btn.getChildren().addAll(iconLabel, textLabel, indicator);
         btn.setUserData(indicator);
         // hover behavior: temporarily show active tint while hovered
         btn.setOnMouseEntered(e -> {
-            iconLabel.setStyle("-fx-text-fill: #2563EB;");
-            textLabel.setStyle("-fx-text-fill: #2563EB;");
+            iconLabel.setStyle("-fx-text-fill: #FFD700;");
+            textLabel.setStyle("-fx-text-fill: #FFD700;");
         });
         btn.setOnMouseExited(e -> {
             Region ind = (Region) btn.getUserData();
-            String color = ind.getOpacity() > 0.5 ? "#2563EB" : "#94A3B8";
+            String color = ind.getOpacity() > 0.5 ? "#FFD700" : "#94A3B8";
             iconLabel.setStyle("-fx-text-fill: " + color + ";");
             textLabel.setStyle("-fx-text-fill: " + color + ";");
         });
@@ -1435,12 +1615,12 @@ public class MainApp extends Application {
 
         // Larger background circle behind the icon to act as tappable target
         Circle bg = new Circle(24);
-        bg.setFill(active ? Color.web("#E6F0FF") : Color.TRANSPARENT);
-        bg.setStroke(active ? Color.web("#2563EB") : Color.TRANSPARENT);
+        bg.setFill(active ? Color.web("#FFFACD") : Color.TRANSPARENT);
+        bg.setStroke(active ? Color.web("#FFD700") : Color.TRANSPARENT);
         bg.setStrokeWidth(active ? 1.5 : 0);
 
         // tint and scale the graphic depending on active state (make icons more prominent)
-        setIconColor(iconGraphic, active ? Color.web("#2563EB") : Color.web("#94A3B8"));
+        setIconColor(iconGraphic, active ? Color.web("#FFD700") : Color.web("#94A3B8"));
         iconGraphic.setScaleX(1.5);
         iconGraphic.setScaleY(1.5);
         StackPane iconHolder = new StackPane(bg, iconGraphic);
@@ -1451,13 +1631,13 @@ public class MainApp extends Application {
 
         Label textLabel = new Label(label);
         textLabel.setFont(Font.font("System", 12));
-        textLabel.setStyle("-fx-text-fill: " + (active ? "#2563EB" : "#94A3B8") + ";");
+        textLabel.setStyle("-fx-text-fill: " + (active ? "#FFD700" : "#94A3B8") + ";");
 
         // small rounded indicator (becomes visible when active)
         Region indicator = new Region();
         indicator.setPrefHeight(5);
         indicator.setMaxWidth(36);
-        indicator.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 3;");
+        indicator.setStyle("-fx-background-color: #FFD700; -fx-background-radius: 3;");
         indicator.setOpacity(active ? 1.0 : 0.0);
 
         btn.getChildren().addAll(iconHolder, textLabel, indicator);
@@ -1465,27 +1645,27 @@ public class MainApp extends Application {
         // hover behavior: tint icon and background like active while hovered
         btn.setOnMouseEntered(e -> {
             // tint graphic and bg
-            setIconColor(iconGraphic, Color.web("#2563EB"));
+            setIconColor(iconGraphic, Color.web("#FFD700"));
             Object ud = iconHolder.getUserData();
             if (ud instanceof Circle) {
                 Circle bgc = (Circle) ud;
-                bgc.setFill(Color.web("#E6F0FF"));
-                bgc.setStroke(Color.web("#2563EB"));
+                bgc.setFill(Color.web("#FFFACD"));
+                bgc.setStroke(Color.web("#FFD700"));
             }
-            textLabel.setStyle("-fx-text-fill: #2563EB;");
+            textLabel.setStyle("-fx-text-fill: #FFD700;");
         });
         btn.setOnMouseExited(e -> {
             Region ind = (Region) btn.getUserData();
             boolean isActive = ind.getOpacity() > 0.5;
-            Color tint = isActive ? Color.web("#2563EB") : Color.web("#94A3B8");
+            Color tint = isActive ? Color.web("#FFD700") : Color.web("#94A3B8");
             setIconColor(iconGraphic, tint);
             Object ud = iconHolder.getUserData();
             if (ud instanceof Circle) {
                 Circle bgc = (Circle) ud;
-                bgc.setFill(isActive ? Color.web("#E6F0FF") : Color.TRANSPARENT);
-                bgc.setStroke(isActive ? Color.web("#2563EB") : Color.TRANSPARENT);
+                bgc.setFill(isActive ? Color.web("#FFFACD") : Color.TRANSPARENT);
+                bgc.setStroke(isActive ? Color.web("#FFD700") : Color.TRANSPARENT);
             }
-            textLabel.setStyle("-fx-text-fill: " + (isActive ? "#2563EB" : "#94A3B8") + ";");
+            textLabel.setStyle("-fx-text-fill: " + (isActive ? "#FFD700" : "#94A3B8") + ";");
         });
         return btn;
     }
@@ -1499,7 +1679,7 @@ public class MainApp extends Application {
             Label textLabel = (Label) b.getChildren().get(1);
             Region indicator = (Region) b.getUserData();
             boolean isActive = (b == activeBtn);
-            String color = isActive ? "#2563EB" : "#2563EB";
+            String color = isActive ? "#FFD700" : "#FFD700";
             // Update icon color for graphic nodes or label text
             if (iconNode instanceof Label) {
                 ((Label) iconNode).setStyle("-fx-text-fill: " + color + ";");
@@ -1512,8 +1692,8 @@ public class MainApp extends Application {
                     Object ud = ((StackPane) iconNode).getUserData();
                     if (ud instanceof Circle) {
                         Circle bg = (Circle) ud;
-                        bg.setFill(isActive ? Color.web("#E6F0FF") : Color.TRANSPARENT);
-                        bg.setStroke(isActive ? Color.web("#2563EB") : Color.TRANSPARENT);
+                        bg.setFill(isActive ? Color.web("#FFFACD") : Color.TRANSPARENT);
+                        bg.setStroke(isActive ? Color.web("#FFD700") : Color.TRANSPARENT);
                     }
                 } else {
                     setIconColor(iconNode, Color.web(color));
@@ -1597,7 +1777,7 @@ public class MainApp extends Application {
             b.setPrefHeight(Math.max(44, (int)(baseFont * 3)));
             b.setMinWidth(84);
             String presetNormal = String.format("-fx-background-radius:12; -fx-border-color:#E5E7EB; -fx-background-color:white; -fx-font-weight:700; -fx-font-size:%.0f; -fx-text-fill: #0F172A;", baseFont);
-            String presetSelected = String.format("-fx-background-radius:12; -fx-border-color:#2563EB; -fx-background-color:#EEF2FF; -fx-font-weight:700; -fx-font-size:%.0f;", baseFont);
+            String presetSelected = String.format("-fx-background-radius:12; -fx-border-color:#FFD700; -fx-background-color:#EEF2FF; -fx-font-weight:700; -fx-font-size:%.0f;", baseFont);
             b.setStyle(presetNormal);
             b.setToggleGroup(tg);
             b.setOnAction(e -> {
@@ -1624,7 +1804,7 @@ public class MainApp extends Application {
             ToggleButton tb = new ToggleButton(s);
             tb.setToggleGroup(sourceTG);
             String srcNormal = String.format("-fx-background-radius:20; -fx-border-color:#E5E7EB; -fx-background-color:white; -fx-padding:8 12; -fx-font-size:%.0f;", baseFont - 1);
-            String srcSelected = String.format("-fx-background-radius:20; -fx-border-color:#2563EB; -fx-background-color:#EFF6FF; -fx-padding:6 10; -fx-font-size:%.0f;", baseFont - 1);
+            String srcSelected = String.format("-fx-background-radius:20; -fx-border-color:#FFD700; -fx-background-color:#EFF6FF; -fx-padding:6 10; -fx-font-size:%.0f;", baseFont - 1);
             tb.setStyle(srcNormal);
             tb.setMinWidth(72);
             // visual feedback when selected
@@ -1690,7 +1870,7 @@ public class MainApp extends Application {
         // Enable/disable deposit button depending on validation
         javafx.scene.Node depositButton = dialog.getDialogPane().lookupButton(depositBtnType);
         depositButton.setDisable(true);
-        depositButton.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-background-radius: 10;");
+        depositButton.setStyle("-fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 10;");
 
         // validation helper
         Runnable validate = () -> {
@@ -1910,61 +2090,334 @@ public class MainApp extends Application {
     private void showPayOnlineDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Pay Online");
-        dialog.setHeaderText("Pay a merchant");
+        dialog.setHeaderText("Choose payment method");
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+        grid.setHgap(12);
+        grid.setVgap(16);
+        grid.setPadding(new Insets(24));
+        grid.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 14;");
         double baseFont = 14;
         if (scene != null) baseFont = Math.max(12, Math.min(18, scene.getWidth() * 0.035));
         ColumnConstraints leftCol = new ColumnConstraints(); leftCol.setMinWidth(120); leftCol.setPrefWidth(140); leftCol.setHgrow(Priority.NEVER);
         ColumnConstraints rightCol = new ColumnConstraints(); rightCol.setHgrow(Priority.ALWAYS);
         grid.getColumnConstraints().addAll(leftCol, rightCol);
 
+        // Payment Method Selection
+        ToggleGroup paymentMethodGroup = new ToggleGroup();
+        
+        RadioButton virtualCardOption = new RadioButton("Azure Virtual Card");
+        virtualCardOption.setToggleGroup(paymentMethodGroup);
+        virtualCardOption.setSelected(true);
+        virtualCardOption.setFont(Font.font("System", FontWeight.SEMI_BOLD, baseFont));
+        virtualCardOption.setStyle("-fx-text-fill: #1E293B;");
+        
+        RadioButton walletOption = new RadioButton("Azure Wallet");
+        walletOption.setToggleGroup(paymentMethodGroup);
+        walletOption.setFont(Font.font("System", FontWeight.SEMI_BOLD, baseFont));
+        walletOption.setStyle("-fx-text-fill: #1E293B;");
+        
+        VBox paymentMethodBox = new VBox(10);
+        paymentMethodBox.getChildren().addAll(virtualCardOption, walletOption);
+        grid.add(new Label("Payment Method:"), 0, 0);
+        grid.add(paymentMethodBox, 1, 0);
+        GridPane.setValignment(new Label("Payment Method:"), javafx.geometry.VPos.TOP);
+
         ComboBox<String> merchantBox = new ComboBox<>();
-        // populate from backend fixed merchants and allow custom entry
         merchantBox.getItems().addAll(azureApp.getFixedMerchants());
         merchantBox.setEditable(true);
         merchantBox.setPromptText("Select or type merchant name");
+        merchantBox.setStyle("-fx-padding: 8 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB;");
 
         TextField amountField = new TextField();
         amountField.setPromptText("Amount");
+        amountField.setStyle("-fx-padding: 8 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB;");
 
         Label merchantLabel = new Label("Merchant:"); merchantLabel.setFont(Font.font("System", baseFont)); merchantLabel.setStyle("-fx-text-fill: #374151;"); merchantLabel.setMaxWidth(Double.MAX_VALUE);
         Label amountLabel = new Label("Amount:"); amountLabel.setFont(Font.font("System", baseFont)); amountLabel.setStyle("-fx-text-fill: #374151;"); amountLabel.setMaxWidth(Double.MAX_VALUE);
-        grid.add(merchantLabel, 0, 0);
-        grid.add(merchantBox, 1, 0);
-        grid.add(amountLabel, 0, 1);
-        grid.add(amountField, 1, 1);
+        
+        grid.add(merchantLabel, 0, 1);
+        grid.add(merchantBox, 1, 1);
+        grid.add(amountLabel, 0, 2);
+        grid.add(amountField, 1, 2);
+
+        // Virtual Card Info Section (shown when Virtual Card is selected)
+        VBox virtualCardInfoBox = new VBox(8);
+        virtualCardInfoBox.setPadding(new Insets(14));
+        virtualCardInfoBox.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #FFD700; -fx-border-width: 2;");
+        
+        UserAccount user = azureApp.getUser(currentUser);
+        String vbn = user != null ? user.getVirtualBankNumber() : null;
+        if (vbn == null || vbn.isEmpty()) {
+            vbn = "Not Available";
+        }
+        String lastFour = vbn.length() >= 4 ? vbn.substring(vbn.length() - 4) : vbn;
+        String maskedCard = "**** **** **** " + lastFour;
+        
+        Label virtualCardTitle = new Label("💳 Azure Virtual Card");
+        virtualCardTitle.setFont(Font.font("System", FontWeight.BOLD, baseFont + 1));
+        virtualCardTitle.setStyle("-fx-text-fill: #FFD700;");
+        
+        Label cardNumberLabel = new Label("Card Number: " + maskedCard);
+        cardNumberLabel.setFont(Font.font("System", baseFont - 1));
+        cardNumberLabel.setStyle("-fx-text-fill: #1E293B;");
+        
+        Label cardStatusLabel = new Label("Status: Active & Ready");
+        cardStatusLabel.setFont(Font.font("System", baseFont - 1));
+        cardStatusLabel.setStyle("-fx-text-fill: #10B981;");
+        
+        virtualCardInfoBox.getChildren().addAll(virtualCardTitle, cardNumberLabel, cardStatusLabel);
+        
+        grid.add(virtualCardInfoBox, 0, 3, 2, 1);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Style buttons
+        javafx.scene.Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setStyle("-fx-background-color: #FFD700; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 32;");
+        javafx.scene.Node cancelButton = dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelButton.setStyle("-fx-background-color: #E5E7EB; -fx-text-fill: #374151; -fx-font-weight: bold;");
 
         dialog.showAndWait().ifPresent(response -> {
-            try {
-                String merchant = merchantBox.getEditor().getText().trim();
-                double amt = Double.parseDouble(amountField.getText().trim());
-                double fee = 15.0; // fixed online payment fee
-                double total = amt + fee;
-                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-                confirm.setTitle("Confirm Payment");
-                confirm.setHeaderText("Pay merchant and service fee");
-                confirm.setContentText(String.format("You are about to pay ₱%.2f to %s\nService Fee: ₱%.2f\nTotal: ₱%.2f\nProceed?", amt, merchant, fee, total));
-                confirm.showAndWait().ifPresent(cresp -> {
-                    if (cresp == ButtonType.OK) {
-                        if (azureApp.payOnline(currentUser, merchant, amt)) {
-                            showAlert("Success", String.format("Paid ₱%.2f to %s (Fee: ₱%.2f)", amt, merchant, fee), Alert.AlertType.INFORMATION);
-                            refreshMainScreen();
-                        } else {
-                            showAlert("Error", "Payment failed. Check amount and balance.", Alert.AlertType.ERROR);
+            if (response == ButtonType.OK) {
+                try {
+                    String merchant = merchantBox.getEditor().getText().trim();
+                    double amt = Double.parseDouble(amountField.getText().trim());
+                    double fee = 15.0; // fixed online payment fee
+                    double total = amt + fee;
+                    
+                    String paymentMethod = virtualCardOption.isSelected() ? "Virtual Card" : "Wallet";
+                    String cardInfo = virtualCardOption.isSelected() ? maskedCard : "N/A";
+                    
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Confirm Payment");
+                    confirm.setHeaderText("Pay merchant using " + paymentMethod);
+                    confirm.setContentText(String.format("Payment Method: %s\n%s\nMerchant: %s\nAmount: ₱%.2f\nService Fee: ₱%.2f\nTotal: ₱%.2f\n\nProceed?", 
+                        paymentMethod, cardInfo, merchant, amt, fee, total));
+                    confirm.showAndWait().ifPresent(cresp -> {
+                        if (cresp == ButtonType.OK) {
+                            if (azureApp.payOnline(currentUser, merchant, amt)) {
+                                showAlert("Success", 
+                                    String.format("Payment successful!\nPaid ₱%.2f to %s using %s\nService Fee: ₱%.2f\nTotal Charged: ₱%.2f", 
+                                    amt, merchant, paymentMethod, fee, total), 
+                                    Alert.AlertType.INFORMATION);
+                                refreshMainScreen();
+                            } else {
+                                showAlert("Error", "Payment failed. Check merchant, amount, and balance.", Alert.AlertType.ERROR);
+                            }
                         }
-                    }
-                });
-            } catch (NumberFormatException e) {
-                showAlert("Error", "Invalid amount entered", Alert.AlertType.ERROR);
+                    });
+                } catch (NumberFormatException e) {
+                    showAlert("Error", "Invalid amount entered", Alert.AlertType.ERROR);
+                }
             }
         });
+    }
+
+    private void showVCardDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("V-Card Shop");
+        dialog.setHeaderText("Choose product category");
+
+        VBox mainContent = new VBox(16);
+        mainContent.setPadding(new Insets(20));
+        mainContent.setStyle("-fx-background-color: #F8FAFC;");
+
+        // Category buttons
+        Button gamingBtn = createCategoryButton("🎮 Gaming", "Steam, Roblox, Mobile Legends");
+        Button streamingBtn = createCategoryButton("🎬 Streaming", "Netflix, Disney+, Amazon Prime");
+        Button mobileBtn = createCategoryButton("📱 Mobile & Apps", "Google Play, App Store");
+        Button musicBtn = createCategoryButton("🎵 Music", "Spotify, YouTube Music");
+
+        HBox categoryBox = new HBox(12);
+        categoryBox.setAlignment(Pos.CENTER);
+        categoryBox.getChildren().addAll(gamingBtn, streamingBtn, mobileBtn, musicBtn);
+
+        // Title for products section
+        Label productsTitle = new Label("Choose Your Product");
+        productsTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
+        productsTitle.setStyle("-fx-text-fill: #0F172A;");
+
+        // Products container (scrollable)
+        VBox productsContainer = new VBox(12);
+        productsContainer.setPadding(new Insets(12));
+        productsContainer.setStyle("-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-radius: 10; -fx-border-width: 1;");
+
+        ScrollPane productsScroll = new ScrollPane(productsContainer);
+        productsScroll.setFitToWidth(true);
+        productsScroll.setPrefHeight(250);
+        productsScroll.setStyle("-fx-control-inner-background: white;");
+
+        // Initial products (Gaming)
+        updateProductList(productsContainer, "gaming");
+
+        // Wire category buttons
+        gamingBtn.setOnAction(e -> {
+            gamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            updateProductList(productsContainer, "gaming");
+        });
+        streamingBtn.setOnAction(e -> {
+            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            streamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            updateProductList(productsContainer, "streaming");
+        });
+        mobileBtn.setOnAction(e -> {
+            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            mobileBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+            musicBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            updateProductList(productsContainer, "mobile");
+        });
+        musicBtn.setOnAction(e -> {
+            gamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            streamingBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            mobileBtn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8;");
+            musicBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+            updateProductList(productsContainer, "music");
+        });
+
+        // Set initial style for gaming button
+        gamingBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #1F2937; -fx-padding: 10 16; -fx-border-radius: 8; -fx-font-weight: bold;");
+
+        mainContent.getChildren().addAll(categoryBox, productsTitle, productsScroll);
+
+        dialog.getDialogPane().setContent(mainContent);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CLOSE);
+
+        dialog.showAndWait();
+    }
+
+    private Button createCategoryButton(String title, String description) {
+        VBox buttonContent = new VBox(2);
+        buttonContent.setAlignment(Pos.CENTER);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        titleLabel.setStyle("-fx-text-fill: inherit;");
+
+        Label descLabel = new Label(description);
+        descLabel.setFont(Font.font("System", 10));
+        descLabel.setStyle("-fx-text-fill: #6B7280;");
+        descLabel.setWrapText(true);
+
+        buttonContent.getChildren().addAll(titleLabel, descLabel);
+
+        Button btn = new Button();
+        btn.setGraphic(buttonContent);
+        btn.setStyle("-fx-background-color: #FFF9E6; -fx-text-fill: #6B7280; -fx-padding: 10 16; -fx-border-radius: 8; -fx-cursor: hand;");
+        btn.setPrefWidth(120);
+        btn.setMinHeight(60);
+
+        return btn;
+    }
+
+    private void updateProductList(VBox container, String category) {
+        container.getChildren().clear();
+
+        java.util.Map<String, java.util.List<String[]>> products = new java.util.HashMap<>();
+
+        // Gaming products (name, price)
+        java.util.List<String[]> gaming = java.util.Arrays.asList(
+            new String[]{"Steam Wallet", "₱500"}, new String[]{"Steam Wallet", "₱1000"},
+            new String[]{"Roblox Robux", "₱500"}, new String[]{"Roblox Robux", "₱1500"},
+            new String[]{"Mobile Legends", "₱100"}, new String[]{"Mobile Legends", "₱500"}
+        );
+
+        java.util.List<String[]> streaming = java.util.Arrays.asList(
+            new String[]{"Netflix", "₱249"}, new String[]{"Netflix", "₱549"},
+            new String[]{"Disney+", "₱299"}, new String[]{"Disney+", "₱799"},
+            new String[]{"Amazon Prime", "₱149"}, new String[]{"Amazon Prime", "₱1499"}
+        );
+
+        java.util.List<String[]> mobile = java.util.Arrays.asList(
+            new String[]{"Google Play", "₱500"}, new String[]{"Google Play", "₱1000"},
+            new String[]{"App Store", "₱500"}, new String[]{"App Store", "₱1000"},
+            new String[]{"PlayStation Store", "₱500"}, new String[]{"PlayStation Store", "₱1500"}
+        );
+
+        java.util.List<String[]> music = java.util.Arrays.asList(
+            new String[]{"Spotify Premium", "₱129"}, new String[]{"Spotify Premium", "₱1299"},
+            new String[]{"YouTube Music", "₱129"}, new String[]{"YouTube Music", "₱1299"},
+            new String[]{"Apple Music", "₱109"}, new String[]{"Apple Music", "₱1090"}
+        );
+
+        products.put("gaming", gaming);
+        products.put("streaming", streaming);
+        products.put("mobile", mobile);
+        products.put("music", music);
+
+        // Display provider header
+        Label providerLabel = new Label();
+        switch (category) {
+            case "gaming":
+                providerLabel.setText("🎮 Gaming Platforms");
+                break;
+            case "streaming":
+                providerLabel.setText("🎬 Streaming Services");
+                break;
+            case "mobile":
+                providerLabel.setText("📱 Mobile & App Stores");
+                break;
+            case "music":
+                providerLabel.setText("🎵 Music Streaming");
+                break;
+        }
+        providerLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        providerLabel.setStyle("-fx-text-fill: #1F2937;");
+        container.getChildren().add(providerLabel);
+
+        java.util.List<String[]> categoryProducts = products.get(category);
+
+        // Group products by provider
+        java.util.Map<String, java.util.List<String>> groupedByProvider = new java.util.LinkedHashMap<>();
+        for (String[] product : categoryProducts) {
+            String provider = product[0].replaceAll(" \\d+", ""); // Get provider name
+            String price = product[1];
+            groupedByProvider.computeIfAbsent(provider, k -> new java.util.ArrayList<>()).add(price);
+        }
+
+        for (java.util.Map.Entry<String, java.util.List<String>> entry : groupedByProvider.entrySet()) {
+            String provider = entry.getKey();
+            java.util.List<String> prices = entry.getValue();
+
+            VBox providerBox = new VBox(8);
+            providerBox.setPadding(new Insets(12));
+            providerBox.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1;");
+
+            Label providerTitle = new Label(provider);
+            providerTitle.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+            providerTitle.setStyle("-fx-text-fill: #1F2937;");
+
+            HBox priceBox = new HBox(8);
+            priceBox.setAlignment(Pos.CENTER_LEFT);
+            priceBox.setStyle("-fx-wrap-text: true;");
+
+            for (String price : prices) {
+                Button priceBtn = new Button(price);
+                priceBtn.setStyle("-fx-background-color: white; -fx-border-color: #FFD700; -fx-border-width: 2; -fx-border-radius: 6; -fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-padding: 6 12; -fx-cursor: hand;");
+                priceBtn.setOnAction(e -> {
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Purchase Confirmation");
+                    confirm.setHeaderText("Confirm purchase");
+                    confirm.setContentText(String.format("Buy %s voucher for %s?", provider, price));
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) {
+                            showAlert("Success", String.format("Successfully purchased %s voucher worth %s!\n\nCheck your email for the code.", provider, price), Alert.AlertType.INFORMATION);
+                        }
+                    });
+                });
+                priceBox.getChildren().add(priceBtn);
+            }
+
+            providerBox.getChildren().addAll(providerTitle, priceBox);
+            container.getChildren().add(providerBox);
+        }
     }
 
     private void showRedeemPointsDialog() {
@@ -2141,12 +2594,37 @@ public class MainApp extends Application {
     private void showBuyLoadDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Buy Prepaid Load");
-        dialog.setHeaderText("Purchase load for a mobile number");
+        dialog.setHeaderText("Purchase load with Virtual Card or Wallet");
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+        grid.setHgap(12);
+        grid.setVgap(16);
+        grid.setPadding(new Insets(24));
+        grid.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 14;");
+
+        // Payment Method Selection
+        ToggleGroup paymentMethodGroup = new ToggleGroup();
+        
+        RadioButton virtualCardOption = new RadioButton("Azure Virtual Card");
+        virtualCardOption.setToggleGroup(paymentMethodGroup);
+        virtualCardOption.setSelected(true);
+        virtualCardOption.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        virtualCardOption.setStyle("-fx-text-fill: #1E293B;");
+        
+        RadioButton walletOption = new RadioButton("Azure Wallet");
+        walletOption.setToggleGroup(paymentMethodGroup);
+        walletOption.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        walletOption.setStyle("-fx-text-fill: #1E293B;");
+        
+        VBox paymentMethodBox = new VBox(8);
+        paymentMethodBox.getChildren().addAll(virtualCardOption, walletOption);
+        
+        Label paymentLabel = new Label("Payment:");
+        paymentLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        paymentLabel.setStyle("-fx-text-fill: #374151;");
+        grid.add(paymentLabel, 0, 0);
+        grid.add(paymentMethodBox, 1, 0);
+        GridPane.setValignment(paymentLabel, javafx.geometry.VPos.TOP);
 
         ChoiceBox<String> networkChoice = new ChoiceBox<>();
         networkChoice.getItems().addAll("Globe/TM", "Smart/TNT", "DITO");
@@ -2154,8 +2632,11 @@ public class MainApp extends Application {
 
         TextField numberField = new TextField();
         numberField.setPromptText("09XXXXXXXXX");
+        numberField.setStyle("-fx-padding: 8 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB;");
+        
         TextField amountField = new TextField();
         amountField.setPromptText("Amount");
+        amountField.setStyle("-fx-padding: 8 12; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #E5E7EB;");
 
         // Preset load amounts arranged as 2 columns x 4 rows (8 presets)
         int[] presets = {50, 100, 150, 200, 250, 300, 500, 1000};
@@ -2163,7 +2644,6 @@ public class MainApp extends Application {
         presetsGrid.setHgap(8);
         presetsGrid.setVgap(8);
 
-        // Make two equal percentage columns so the grid is responsive
         ColumnConstraints cc1 = new ColumnConstraints();
         cc1.setPercentWidth(50);
         ColumnConstraints cc2 = new ColumnConstraints();
@@ -2174,15 +2654,13 @@ public class MainApp extends Application {
         for (int i = 0; i < presets.length; i++) {
             int value = presets[i];
             Button b = new Button("₱" + value);
-            // allow the button to grow horizontally to fill available column space
             b.setMaxWidth(Double.MAX_VALUE);
             GridPane.setHgrow(b, Priority.ALWAYS);
-            b.setStyle("-fx-background-radius:8; -fx-border-color:#E2E8F0; -fx-background-color:white;");
+            b.setStyle("-fx-background-radius:8; -fx-border-color:#E2E8F0; -fx-background-color:white; -fx-font-weight: bold;");
             b.setOnAction(e -> {
                 amountField.setText(String.valueOf(value));
-                // highlight selected button
-                for (Button pb : presetButtons) pb.setStyle("-fx-background-radius:8; -fx-border-color:#E2E8F0; -fx-background-color:white;");
-                b.setStyle("-fx-background-radius:8; -fx-border-color:#2563EB; -fx-background-color:#EEF2FF;");
+                for (Button pb : presetButtons) pb.setStyle("-fx-background-radius:8; -fx-border-color:#E2E8F0; -fx-background-color:white; -fx-font-weight: bold;");
+                b.setStyle("-fx-background-radius:8; -fx-border-color:#FFD700; -fx-background-color:#FFFACD; -fx-font-weight: bold;");
             });
             presetButtons.add(b);
             int row = i / 2;
@@ -2197,26 +2675,30 @@ public class MainApp extends Application {
         grid.getColumnConstraints().addAll(leftCol, rightCol);
 
         Label networkLabel = new Label("Network:"); networkLabel.setFont(Font.font("System", baseFont)); networkLabel.setStyle("-fx-text-fill: #374151;"); networkLabel.setMaxWidth(Double.MAX_VALUE);
-        Label numberLabel = new Label("Mobile Number:"); numberLabel.setFont(Font.font("System", baseFont)); numberLabel.setStyle("-fx-text-fill: #374151;"); numberLabel.setMaxWidth(Double.MAX_VALUE);
-        Label presetLabel = new Label("Preset Amounts:"); presetLabel.setFont(Font.font("System", baseFont)); presetLabel.setStyle("-fx-text-fill: #374151;"); presetLabel.setMaxWidth(Double.MAX_VALUE);
-        Label enterLabel = new Label("Or enter amount:"); enterLabel.setFont(Font.font("System", baseFont)); enterLabel.setStyle("-fx-text-fill: #374151;"); enterLabel.setMaxWidth(Double.MAX_VALUE);
+        Label numberLabel = new Label("Mobile #:"); numberLabel.setFont(Font.font("System", baseFont)); numberLabel.setStyle("-fx-text-fill: #374151;"); numberLabel.setMaxWidth(Double.MAX_VALUE);
+        Label presetLabel = new Label("Quick Amounts:"); presetLabel.setFont(Font.font("System", baseFont)); presetLabel.setStyle("-fx-text-fill: #374151;"); presetLabel.setMaxWidth(Double.MAX_VALUE);
+        Label enterLabel = new Label("Or enter:"); enterLabel.setFont(Font.font("System", baseFont)); enterLabel.setStyle("-fx-text-fill: #374151;"); enterLabel.setMaxWidth(Double.MAX_VALUE);
 
-        grid.add(networkLabel, 0, 0);
-        grid.add(networkChoice, 1, 0);
-        grid.add(numberLabel, 0, 1);
-        grid.add(numberField, 1, 1);
-        grid.add(presetLabel, 0, 2);
-        grid.add(presetsGrid, 1, 2);
-        grid.add(enterLabel, 0, 3);
-        grid.add(amountField, 1, 3);
+        grid.add(networkLabel, 0, 1);
+        grid.add(networkChoice, 1, 1);
+        grid.add(numberLabel, 0, 2);
+        grid.add(numberField, 1, 2);
+        grid.add(presetLabel, 0, 3);
+        grid.add(presetsGrid, 1, 3);
+        grid.add(enterLabel, 0, 4);
+        grid.add(amountField, 1, 4);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        // Style buttons
+        javafx.scene.Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setStyle("-fx-background-color: #FFD700; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 32;");
+        javafx.scene.Node cancelButton = dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelButton.setStyle("-fx-background-color: #E5E7EB; -fx-text-fill: #374151; -fx-font-weight: bold;");
 
-        // make the dialog resizable so the preset grid is responsive
         dialog.setResizable(true);
-        // prefer a reasonable initial width but allow resizing
-        dialog.getDialogPane().setPrefWidth(420);
+        dialog.getDialogPane().setPrefWidth(480);
 
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
@@ -2224,14 +2706,13 @@ public class MainApp extends Application {
                     String network = networkChoice.getValue();
                     String number = numberField.getText().trim();
                     double amt = Double.parseDouble(amountField.getText().trim());
+                    String paymentMethod = virtualCardOption.isSelected() ? "Virtual Card" : "Wallet";
 
-                    // Basic mobile validation: must be 11 digits starting with 09
                     if (!number.matches("^09\\d{9}$")) {
                         showAlert("Error", "Invalid mobile number format. Use 09XXXXXXXXX.", Alert.AlertType.ERROR);
                         return;
                     }
 
-                    // Operator prefix checks (common prefixes). If prefix doesn't match selected operator, show error.
                     String prefix4 = number.substring(0,4);
                     java.util.Set<String> globe = java.util.Set.of("0905","0906","0915","0916","0917","0926","0927","0935","0936","0945","0955","0965","0975","0994");
                     java.util.Set<String> smart = java.util.Set.of("0907","0908","0909","0910","0911","0912","0918","0919","0920","0921","0928","0929","0938","0948","0951","0952","0967","0973","0998");
@@ -2251,17 +2732,20 @@ public class MainApp extends Application {
                             return;
                         }
                     }
-                    // compute 1% fee (rounded to 2 decimals)
                     double fee = Math.round((amt * 0.01) * 100.0) / 100.0;
                     double total = amt + fee;
                     Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                     confirm.setTitle("Confirm Load Purchase");
-                    confirm.setHeaderText("Buy load and service fee");
-                    confirm.setContentText(String.format("You are about to purchase ₱%.2f load for %s\nService Fee (1%%): ₱%.2f\nTotal: ₱%.2f\nProceed?", amt, number, fee, total));
+                    confirm.setHeaderText("Buy load using " + paymentMethod);
+                    confirm.setContentText(String.format("Network: %s\nNumber: %s\nLoad Amount: ₱%.2f\nService Fee (1%%): ₱%.2f\nTotal: ₱%.2f\n\nPayment Method: %s\nProceed?", 
+                        network, number, amt, fee, total, paymentMethod));
                     confirm.showAndWait().ifPresent(cresp -> {
                         if (cresp == ButtonType.OK) {
                             if (azureApp.buyLoad(currentUser, network, number, amt)) {
-                                showAlert("Success", String.format("Purchased ₱%.2f load for %s (Fee: ₱%.2f)", amt, number, fee), Alert.AlertType.INFORMATION);
+                                showAlert("Success", 
+                                    String.format("Load purchased successfully!\n%s load sent to %s\nService Fee: ₱%.2f\nTotal Charged: ₱%.2f\nPayment: %s", 
+                                    network, number, fee, total, paymentMethod), 
+                                    Alert.AlertType.INFORMATION);
                                 refreshMainScreen();
                             } else {
                                 showAlert("Error", "Load purchase failed. Check number format and balance.", Alert.AlertType.ERROR);
@@ -2302,24 +2786,24 @@ public class MainApp extends Application {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setPrefHeight(54);
         btn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-background-radius: 12; " +
-            "-fx-border-color: #2563EB; " +
+            "-fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; " +
             "-fx-cursor: hand;"
         );
         
         btn.setOnMouseEntered(e -> 
             btn.setStyle(
-                "-fx-background-color: #1E40AF; " +
+                "-fx-background-color: #FFA500; " +
                 "-fx-text-fill: white; " +
                 "-fx-font-size: 16; " +
                 "-fx-font-weight: bold; " +
                 "-fx-background-radius: 12; " +
-                "-fx-border-color: #1E40AF; " +
+                "-fx-border-color: #FFA500; " +
                 "-fx-border-width: 1.5; " +
                 "-fx-cursor: hand;"
             )
@@ -2327,12 +2811,12 @@ public class MainApp extends Application {
         
         btn.setOnMouseExited(e -> 
             btn.setStyle(
-                "-fx-background-color: #2563EB; " +
+                "-fx-background-color: #FFD700; " +
                 "-fx-text-fill: white; " +
                 "-fx-font-size: 16; " +
                 "-fx-font-weight: bold; " +
                 "-fx-background-radius: 12; " +
-                "-fx-border-color: #2563EB; " +
+                "-fx-border-color: #FFD700; " +
                 "-fx-border-width: 1.5; " +
                 "-fx-cursor: hand;"
             )
@@ -2380,7 +2864,7 @@ public class MainApp extends Application {
         virtualCard.setPadding(new Insets(30, 25, 30, 25));
         virtualCard.setPrefHeight(240);
         virtualCard.setStyle(
-            "-fx-background-color: linear-gradient(to bottom right, #2563EB, #3B82F6); " +
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107); " +
             "-fx-background-radius: 16; " +
             "-fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.25), 15, 0, 0, 8);"
         );
@@ -2451,7 +2935,7 @@ public class MainApp extends Application {
         HBox slideButtonRow = new HBox();
         slideButtonRow.setAlignment(Pos.CENTER);
         
-        Button slideHint = new Button("→  Slide to view card details");
+        Button slideHint = new Button("→  Click to view card details");
         slideHint.setFont(Font.font("System", 12));
         slideHint.setStyle(
             "-fx-background-color: rgba(255, 255, 255, 0.2); " +
@@ -2492,7 +2976,7 @@ public class MainApp extends Application {
         Button topUpBtn = new Button("Top Up");
         topUpBtn.setFont(Font.font("System", FontWeight.BOLD, 11));
         topUpBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-background-radius: 8; " +
             "-fx-padding: 10 24; " +
@@ -2554,7 +3038,7 @@ public class MainApp extends Application {
         Button redeemBtn = new Button("Redeem");
         redeemBtn.setFont(Font.font("System", FontWeight.BOLD, 12));
         redeemBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-background-radius: 8; " +
             "-fx-padding: 8 20; " +
@@ -2639,7 +3123,7 @@ public class MainApp extends Application {
             case "premium": tierColor = "#8B5CF6"; break;
             case "elite": tierColor = "#EC4899"; break;
             case "vip": tierColor = "#EAB308"; break;
-            default: tierColor = "#2563EB";
+            default: tierColor = "#FFD700";
         }
         
         Label tierBadge = new Label(loyaltyTier);
@@ -3039,7 +3523,7 @@ public class MainApp extends Application {
         header.setStyle("-fx-background-color: #F5F7FA;");
         // User avatar and name (mirror createHeader)
         Circle avatar = new Circle(26);
-        avatar.setFill(Color.web("#2563EB"));
+        avatar.setFill(Color.web("#FFD700"));
         avatar.setStroke(Color.web("#e5e7eb"));
         avatar.setStrokeWidth(1.5);
 
@@ -3091,7 +3575,7 @@ public class MainApp extends Application {
         accountMenu.getItems().addAll(logoutItem);
         accountMenu.setText("Account ▾");
         accountMenu.setStyle(
-            "-fx-background-color: white; -fx-text-fill: #2563EB; " +
+            "-fx-background-color: white; -fx-text-fill: #FFD700; " +
             "-fx-font-size: 12; -fx-font-weight: bold; " +
             "-fx-background-radius: 10; -fx-border-radius: 10; " +
             "-fx-border-color: #E2E8F0; -fx-padding: 8 12; -fx-cursor: hand;"
@@ -3157,7 +3641,7 @@ public class MainApp extends Application {
 
         // Top row: avatar + username on the left, account menu on the right
         Circle avatar = new Circle(26);
-        avatar.setFill(Color.web("#2563EB"));
+        avatar.setFill(Color.web("#FFD700"));
         avatar.setStroke(Color.web("#e5e7eb"));
         avatar.setStrokeWidth(1.5);
 
@@ -3188,7 +3672,7 @@ public class MainApp extends Application {
         accountMenu.getItems().addAll(logoutItem);
         accountMenu.setText("Account ▾");
         accountMenu.setStyle(
-            "-fx-background-color: white; -fx-text-fill: #2563EB; " +
+            "-fx-background-color: white; -fx-text-fill: #FFD700; " +
             "-fx-font-size: 12; -fx-font-weight: bold; " +
             "-fx-background-radius: 10; -fx-border-radius: 10; " +
             "-fx-border-color: #E2E8F0; -fx-padding: 8 12; -fx-cursor: hand;"
@@ -3234,7 +3718,7 @@ public class MainApp extends Application {
             "-fx-text-fill: #475569; " +
             "-fx-font-size: 14; " +
             "-fx-background-radius: 8; " +
-            "-fx-border-color: #2563EB; " +
+            "-fx-border-color: #FFD700; " +
             "-fx-border-width: 1.5; " +
             "-fx-border-radius: 8; " +
             "-fx-cursor: hand; " +
@@ -3247,7 +3731,7 @@ public class MainApp extends Application {
                 "-fx-text-fill: #475569; " +
                 "-fx-font-size: 14; " +
                 "-fx-background-radius: 8; " +
-                "-fx-border-color: #2563EB; " +
+                "-fx-border-color: #FFD700; " +
                 "-fx-border-width: 1.5; " +
                 "-fx-border-radius: 8; " +
                 "-fx-cursor: hand; " +
@@ -3261,7 +3745,7 @@ public class MainApp extends Application {
                 "-fx-text-fill: #475569; " +
                 "-fx-font-size: 14; " +
                 "-fx-background-radius: 8; " +
-                "-fx-border-color: #2563EB; " +
+                "-fx-border-color: #FFD700; " +
                 "-fx-border-width: 1.5; " +
                 "-fx-border-radius: 8; " +
                 "-fx-cursor: hand; " +
@@ -3394,7 +3878,7 @@ public class MainApp extends Application {
         VBox cardVisual = new VBox(15);
         cardVisual.setPadding(new Insets(25));
         cardVisual.setStyle(
-            "-fx-background-color: linear-gradient(to bottom right, #2563EB, #3B82F6); " +
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107); " +
             "-fx-background-radius: 12; " +
             "-fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.25), 10, 0, 0, 5);"
         );
@@ -3524,7 +4008,7 @@ public class MainApp extends Application {
         loginBtn.setOnAction(e -> handleAdminLogin(passwordField));
         // Remove blue border for admin login button (keep background similar to primary)
         loginBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -3532,7 +4016,7 @@ public class MainApp extends Application {
             "-fx-cursor: hand;"
         );
         loginBtn.setOnMouseEntered(e -> loginBtn.setStyle(
-            "-fx-background-color: #1E40AF; " +
+            "-fx-background-color: #FFA500; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -3540,7 +4024,7 @@ public class MainApp extends Application {
             "-fx-cursor: hand;"
         ));
         loginBtn.setOnMouseExited(e -> loginBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
@@ -3654,12 +4138,12 @@ public class MainApp extends Application {
         Button toggleBtn = new Button("☰");
         toggleBtn.setPrefSize(30, 30);
         toggleBtn.setStyle(
-            "-fx-background-color: #2563EB; " +
+            "-fx-background-color: #FFD700; " +
             "-fx-text-fill: white; " +
             "-fx-font-size: 14; " +
             "-fx-background-radius: 6; " +
             "-fx-cursor: hand; " +
-            "-fx-border-color: #2563EB; " +
+            "-fx-border-color: #FFD700; " +
             "-fx-border-radius: 6;"
         );
         toggleBtn.setOnAction(e -> toggleSidebar());
@@ -3743,7 +4227,7 @@ public class MainApp extends Application {
         
         if (active) {
             btn.setStyle(
-                "-fx-background-color: #2563EB; " +
+                "-fx-background-color: #FFD700; " +
                 "-fx-text-fill: white; " +
                 "-fx-font-size: 14; " +
                 "-fx-font-weight: bold; " +
@@ -3801,7 +4285,7 @@ public class MainApp extends Application {
             Button showSidebarBtn = new Button("☰");
             showSidebarBtn.setPrefSize(40, 40);
             showSidebarBtn.setStyle(
-                "-fx-background-color: #2563EB; " +
+                "-fx-background-color: #FFD700; " +
                 "-fx-text-fill: white; " +
                 "-fx-font-size: 16; " +
                 "-fx-background-radius: 8; " +
@@ -4130,7 +4614,7 @@ public class MainApp extends Application {
                         setStyle("");
                     } else {
                         setText(item);
-                        setStyle("-fx-text-fill: #3B82F6; -fx-font-weight: bold; -fx-alignment: CENTER_RIGHT;");
+                        setStyle("-fx-text-fill: #FFC107; -fx-font-weight: bold; -fx-alignment: CENTER_RIGHT;");
                     }
                 }
             };
@@ -4149,7 +4633,7 @@ public class MainApp extends Application {
                 } else {
                     // Check if this row is selected
                     if (isSelected()) {
-                        setStyle("-fx-background-color: #DBEAFE; -fx-border-color: #3B82F6; -fx-border-width: 1;");
+                        setStyle("-fx-background-color: #DBEAFE; -fx-border-color: #FFC107; -fx-border-width: 1;");
                     } else if (getIndex() % 2 == 0) {
                         setStyle("-fx-background-color: #F8FAFC;");
                     } else {
@@ -4771,11 +5255,11 @@ public class MainApp extends Application {
         
         btn.setOnMouseEntered(e -> 
             btn.setStyle(
-                "-fx-background-color: #2563EB; " +
+                "-fx-background-color: #FFD700; " +
                 "-fx-text-fill: white; " +
                 "-fx-font-size: 12; " +
                 "-fx-background-radius: 10; " +
-                "-fx-border-color: #2563EB; " +
+                "-fx-border-color: #FFD700; " +
                 "-fx-border-radius: 10; " +
                 "-fx-cursor: hand; " +
                 "-fx-padding: 0 16;"

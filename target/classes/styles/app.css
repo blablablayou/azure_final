@@ -22,10 +22,10 @@
 
 /* Balance card */
 .balance-card {
-    -fx-background-color: linear-gradient(to bottom right, #2563EB, #3B82F6);
+    -fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107);
     -fx-background-radius: 20;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 4);
-    -fx-border-color: rgba(37,99,235,0.18);
+    -fx-border-color: rgba(255,215,0,0.18);
     -fx-border-width: 1;
     -fx-border-radius: 20;
     -fx-text-fill: white;
@@ -33,7 +33,7 @@
 
 .tier-pill {
     -fx-background-color: white;
-    -fx-text-fill: #2563EB;
+    -fx-text-fill: #FFD700;
     -fx-padding: 4 8;
     -fx-background-radius: 6;
     -fx-font-size: 12;
@@ -62,9 +62,9 @@
 
 /* Virtual Card styles */
 .virtual-card {
-    -fx-background-color: linear-gradient(to bottom right, #2563EB, #60A5FA);
+    -fx-background-color: linear-gradient(to bottom right, #FFD700, #FFC107);
     -fx-background-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.12), 10, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.12), 10, 0, 0, 6);
 }
 
 /* Large Virtual Card for Wallet Page */
@@ -96,7 +96,7 @@
 }
 .virtual-card-button {
     -fx-background-color: white;
-    -fx-text-fill: #2563EB;
+    -fx-text-fill: #FFD700;
     -fx-background-radius: 8;
 }
 

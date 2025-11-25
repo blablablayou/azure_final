@@ -55,6 +55,15 @@ public class UserAccount {
         return true;
     }
     
+    /**
+     * Reset PIN directly without verification (used for Forgot PIN feature).
+     */
+    public void resetPin(String newPin) {
+        if (newPin != null && newPin.matches("\\d{4}")) {
+            this.pinHash = HashUtil.hash(newPin);
+        }
+    }
+    
     public void setTransactionPin(String pin) { this.transactionPin = pin; }
     public String getTransactionPin() { return transactionPin; }
     public void setLoyaltyTier(String tier) { this.loyaltyTier = tier; }

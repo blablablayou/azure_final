@@ -10,13 +10,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <javafx.version>21.0.1</javafx.version>
             <!-- Set platform so OpenJFX platform-specific artifacts are pulled (win, linux, mac)
                  Adjust to 'mac' or 'linux' if building on those OSes. -->
             <javafx.platform>win</javafx.platform>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
