@@ -19,6 +19,13 @@
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -35,8 +42,8 @@
     </dependencies>
 
     <build>
-        <!-- Use non-standard source layout (project's sources are in `src`) -->
-        <sourceDirectory>${project.basedir}/src</sourceDirectory>
+        <!-- Standard Maven source layout -->
+        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
