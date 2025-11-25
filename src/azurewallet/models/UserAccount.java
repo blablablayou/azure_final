@@ -195,6 +195,13 @@ public class UserAccount {
     }
 
     public String toFileFormat() {
-        return username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime;
+        // Fields: username,pinHash,mobile,balance,points,totalTransacted,rank,failedAttempts,lockEndTime,virtualBankNumber,cardCVV,cardExpiryDate,loyaltyTier,transactionPin
+        String vbn = (virtualBankNumber == null) ? "" : virtualBankNumber;
+        String cvv = (cardCVV == null) ? "" : cardCVV;
+        String expiry = (cardExpiryDate == null) ? "" : cardExpiryDate;
+        String tier = (loyaltyTier == null) ? "Classic" : loyaltyTier;
+        String tpin = (transactionPin == null) ? "" : transactionPin;
+        return username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime
+            + "," + vbn + "," + cvv + "," + expiry + "," + tier + "," + tpin;
     }
 }

@@ -142,7 +142,7 @@ public class MainApp extends Application {
             VBox formWrapper = new VBox(12);
             formWrapper.setAlignment(Pos.CENTER);
             TextField usernameField = new TextField();
-            usernameField.setPromptText("Username");
+            usernameField.setPromptText("Username/PhoneNumber");
             styleInputField(usernameField);
             PasswordField pinField = new PasswordField();
             pinField.setPromptText("PIN");
@@ -164,6 +164,17 @@ public class MainApp extends Application {
                 )
             );
             signInBtn.setOnAction(e -> handleLogin(usernameField, pinField));
+            // Add Enter key functionality
+            usernameField.setOnKeyPressed(e -> {
+                if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                    handleLogin(usernameField, pinField);
+                }
+            });
+            pinField.setOnKeyPressed(e -> {
+                if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                    handleLogin(usernameField, pinField);
+                }
+            });
             formWrapper.getChildren().addAll(usernameField, pinField, signInBtn);
         
         HBox signUpRow = new HBox(5);
@@ -225,10 +236,10 @@ public class MainApp extends Application {
     }
     
     private void handleLogin(TextField usernameField, PasswordField pinField) {
-        String username = usernameField.getText().trim();
+        String input = usernameField.getText().trim();
         String pin = pinField.getText().trim();
         
-        if (username.isEmpty() || pin.isEmpty()) {
+        if (input.isEmpty() || pin.isEmpty()) {
             showAlert("Error", "Please fill in all fields", Alert.AlertType.ERROR);
             return;
         }
@@ -238,13 +249,37 @@ public class MainApp extends Application {
             return;
         }
         
+        String username = input;
+        
+        // Check if input is a phone number (11 digits starting with 09)
+        if (input.matches("^09\\d{9}$")) {
+            // Find username by phone number
+            String foundUsername = null;
+            for (UserAccount user : azureApp.getUsers().values()) {
+                if (user.getMobile().equals(input)) {
+                    foundUsername = user.getUsername();
+                    break;
+                }
+            }
+            
+            if (foundUsername != null) {
+                username = foundUsername;
+            } else {
+                showAlert("Login Failed", 
+                    "No account found with this phone number.", 
+                    Alert.AlertType.ERROR);
+                pinField.clear();
+                return;
+            }
+        }
+        
         // Call backend login method
         if (azureApp.loginUser(username, pin)) {
             currentUser = username;
             showMainScreen();
         } else {
             showAlert("Login Failed", 
-                "Invalid username or PIN.\nAccount locks after 3 failed attempts for 1 minute.", 
+                "Invalid username/phone or PIN.\nAccount locks after 3 failed attempts for 1 minute.", 
                 Alert.AlertType.ERROR);
             pinField.clear();
         }
@@ -460,6 +495,22 @@ public class MainApp extends Application {
         // Register button
         Button registerBtn = createPrimaryButton("Create Account");
         registerBtn.setOnAction(e -> handleRegistration(usernameField, mobileField, pinField));
+        // Add Enter key functionality
+        usernameField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                handleRegistration(usernameField, mobileField, pinField);
+            }
+        });
+        mobileField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                handleRegistration(usernameField, mobileField, pinField);
+            }
+        });
+        pinField.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                handleRegistration(usernameField, mobileField, pinField);
+            }
+        });
         // Remove blue border for Register button, keep blue background
         registerBtn.setStyle(
             "-fx-background-color: #FFD700; " +
@@ -614,7 +665,7 @@ public class MainApp extends Application {
         title.setFont(Font.font("System", FontWeight.BOLD, 24));
         title.setStyle("-fx-text-fill: #000000;");
         
-        Label accountNumber = new Label(user.getVirtualBankNumber() != null ? user.getVirtualBankNumber() : "N/A");
+        Label accountNumber = new Label(user.getMobile());
         accountNumber.setFont(Font.font("System", 11));
         accountNumber.setStyle("-fx-text-fill: #64748B;");
 
@@ -1268,9 +1319,85 @@ public class MainApp extends Application {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);"
         );
         
-        // Get last 20 transactions
+        // Get transactions and combine with voucher logs and points logs
         java.util.List<String> transactions = azureApp.getFileManager().getTransactionHistory(currentUser);
-        int totalLimit = Math.min(20, transactions.size());
+        java.util.List<String> allHistory = new java.util.ArrayList<>(transactions);
+        
+        // Add voucher logs in transaction format
+        try (java.io.BufferedReader voucherReader = new java.io.BufferedReader(
+                new java.io.FileReader("src/azurewallet/data/voucher_log.txt"))) {
+            String voucherLine;
+            while ((voucherLine = voucherReader.readLine()) != null) {
+                // Use " - username " pattern to match only logs for this user (avoid matching partial usernames)
+                if (voucherLine.contains(" - " + currentUser + " ")) {
+                    // Convert voucher log format to transaction format
+                    // Original: "2025-11-26T10:30:45.123456789 - username redeemed CODE (PHP 1,000.00)"
+                    // Convert to: "2025-11-26T10:30:45.123456789 - username: Redeem Voucher - PHP 1,000.00"
+                    voucherLine = voucherLine.replace(" redeemed ", ": Redeem Voucher - ");
+                    allHistory.add(voucherLine);
+                }
+            }
+        } catch (Exception e) {
+            // Ignore if voucher log doesn't exist or can't be read
+        }
+        
+        // Add points logs in transaction format
+        try (java.io.BufferedReader pointsReader = new java.io.BufferedReader(
+                new java.io.FileReader("src/azurewallet/data/points_log.txt"))) {
+            String pointsLine;
+            while ((pointsLine = pointsReader.readLine()) != null) {
+                // Use " - username " pattern to match only logs for this user (avoid matching partial usernames)
+                if (pointsLine.contains(" - " + currentUser + " ")) {
+                    // Handle earned points
+                    // Original: "2025-11-26T10:30:45.123456789 - username earned 100 points (Description)"
+                    // Convert to: "2025-11-26T10:30:45.123456789 - username: Earned Points - 100 pts"
+                    if (pointsLine.contains(" earned ")) {
+                        String[] parts = pointsLine.split(" earned ");
+                        if (parts.length >= 2) {
+                            String timeAndUser = parts[0];
+                            String restOfLine = parts[1];
+                            String[] pointsParts = restOfLine.split(" points ");
+                            if (pointsParts.length >= 1) {
+                                String points = pointsParts[0].trim();
+                                String formattedLine = timeAndUser + ": Earned Points - " + points + " pts";
+                                allHistory.add(formattedLine);
+                            }
+                        }
+                    }
+                    // Handle redeemed points
+                    // Original: "2025-11-26T10:30:45.123456789 - username redeemed 100 points (converted to PHP 100.00)"
+                    // Convert to: "2025-11-26T10:30:45.123456789 - username: Redeem Points - 100 pts"
+                    else if (pointsLine.contains(" redeemed ")) {
+                        String[] parts = pointsLine.split(" redeemed ");
+                        if (parts.length >= 2) {
+                            String timeAndUser = parts[0];
+                            String restOfLine = parts[1];
+                            String[] pointsParts = restOfLine.split(" points ");
+                            if (pointsParts.length >= 1) {
+                                String points = pointsParts[0].trim();
+                                String formattedLine = timeAndUser + ": Redeem Points - " + points + " pts";
+                                allHistory.add(formattedLine);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore if points log doesn't exist or can't be read
+        }
+        
+        // Sort by date (newest first)
+        allHistory.sort((a, b) -> {
+            try {
+                String dateA = a.split("T")[0];
+                String dateB = b.split("T")[0];
+                return dateB.compareTo(dateA);
+            } catch (Exception e) {
+                return 0;
+            }
+        });
+        
+        int totalLimit = Math.min(20, allHistory.size());
         
         if (totalLimit == 0) {
             Label noTrans = new Label("No transactions yet");
@@ -1280,7 +1407,7 @@ public class MainApp extends Application {
         } else {
             String lastDate = null;
             for (int i = 0; i < totalLimit; i++) {
-                String trans = transactions.get(i);
+                String trans = allHistory.get(i);
                 
                 // Extract date from transaction (format: "YYYY-MM-DD")
                 String[] parts = trans.split("T");
@@ -1374,18 +1501,92 @@ public class MainApp extends Application {
             String transactionDetails = detailParts[1];
             
             // Extract type and amount from transactionDetails
-            // Format: "Deposit - PHP 5,000.00" or "Withdraw - PHP 1,000.00"
+            // Format: "Deposit - PHP 5,000.00" or "Withdraw - PHP 1,000.00" or "Redeem Voucher - PHP 1,000.00" or "Earned Points - 100 pts"
             String type = "Transaction";
             String amount = "";
             
-            if (transactionDetails.contains("Deposit")) {
+            if (transactionDetails.contains("Earned Points")) {
+                type = "Earned Points";
+                // Extract points value from format: "Earned Points - 100 pts"
+                int dashIndex = transactionDetails.indexOf("Earned Points - ");
+                if (dashIndex >= 0) {
+                    String afterDash = transactionDetails.substring(dashIndex + 16).trim();
+                    // Get everything up to " pts" or just the number part
+                    if (afterDash.contains(" pts")) {
+                        String ptsNum = afterDash.substring(0, afterDash.indexOf(" pts")).trim();
+                        // Calculate PHP equivalent (1000 PHP = 1 pts, so pts * 1000 = PHP)
+                        try {
+                            int pts = Integer.parseInt(ptsNum);
+                            double phpEquivalent = pts * 1000.0;
+                            amount = ptsNum + " pts (₱" + String.format("%.0f", phpEquivalent) + ")";
+                        } catch (Exception e) {
+                            amount = afterDash.substring(0, afterDash.indexOf(" pts")).trim() + " pts";
+                        }
+                    } else {
+                        amount = afterDash;
+                    }
+                }
+            } else if (transactionDetails.contains("Redeem Points")) {
+                type = "Redeem Points";
+                // Extract points value from format: "Redeem Points - 100 pts"
+                int dashIndex = transactionDetails.indexOf("Redeem Points - ");
+                if (dashIndex >= 0) {
+                    String afterDash = transactionDetails.substring(dashIndex + 16).trim();
+                    // Get everything up to " pts" or just the number part
+                    if (afterDash.contains(" pts")) {
+                        String ptsNum = afterDash.substring(0, afterDash.indexOf(" pts")).trim();
+                        // Calculate PHP equivalent (1000 PHP = 1 pts, so pts * 1000 = PHP)
+                        try {
+                            int pts = Integer.parseInt(ptsNum);
+                            double phpEquivalent = pts * 1000.0;
+                            amount = ptsNum + " pts (₱" + String.format("%.0f", phpEquivalent) + ")";
+                        } catch (Exception e) {
+                            amount = afterDash.substring(0, afterDash.indexOf(" pts")).trim() + " pts";
+                        }
+                    } else {
+                        amount = afterDash;
+                    }
+                }
+            } else if (transactionDetails.contains("Deposit")) {
                 type = "Deposit";
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Redeem Voucher")) {
+                type = "Redeem Voucher";
                 int phpIndex = transactionDetails.indexOf("PHP");
                 if (phpIndex > 0) {
                     amount = transactionDetails.substring(phpIndex + 3).trim();
                 }
             } else if (transactionDetails.contains("Withdraw")) {
                 type = "Withdraw";
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Send to")) {
+                type = "Send";
+                // Extract recipient name from format: "Send to USERNAME - PHP 1,000.00"
+                int toIndex = transactionDetails.indexOf("Send to ") + 8;
+                int dashIndex = transactionDetails.indexOf(" -");
+                if (dashIndex > toIndex) {
+                    String recipient = transactionDetails.substring(toIndex, dashIndex).trim();
+                    type = "Send to " + recipient;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Receive from")) {
+                type = "Receive";
+                // Extract sender name from format: "Receive from USERNAME - PHP 1,000.00"
+                int fromIndex = transactionDetails.indexOf("Receive from ") + 13;
+                int dashIndex = transactionDetails.indexOf(" -");
+                if (dashIndex > fromIndex) {
+                    String sender = transactionDetails.substring(fromIndex, dashIndex).trim();
+                    type = "Receive from " + sender;
+                }
                 int phpIndex = transactionDetails.indexOf("PHP");
                 if (phpIndex > 0) {
                     amount = transactionDetails.substring(phpIndex + 3).trim();
@@ -1408,16 +1609,114 @@ public class MainApp extends Application {
                 if (phpIndex > 0) {
                     amount = transactionDetails.substring(phpIndex + 3).trim();
                 }
+            } else if (transactionDetails.contains("Bills Payment to")) {
+                type = "Bills Payment";
+                // Extract biller name from format: "Bills Payment to BILLER (Acct: XXXX) - PHP 5,000.00"
+                int toIndex = transactionDetails.indexOf("Bills Payment to ") + 17;
+                int acctIndex = transactionDetails.indexOf(" (Acct:");
+                if (acctIndex > toIndex) {
+                    String biller = transactionDetails.substring(toIndex, acctIndex).trim();
+                    type = "Pay " + biller;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Prepaid Load Purchase")) {
+                type = "Prepaid Load";
+                // Extract network and number from format: "Prepaid Load Purchase (NETWORK - NUMBER) - PHP 500.00"
+                int startParen = transactionDetails.indexOf("(");
+                int endParen = transactionDetails.indexOf(")");
+                if (startParen >= 0 && endParen > startParen) {
+                    String networkInfo = transactionDetails.substring(startParen + 1, endParen).trim();
+                    type = "Load " + networkInfo;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Paid to")) {
+                type = "Payment";
+                // Extract merchant name from format: "Paid to MERCHANT - PHP 1,000.00"
+                int toIndex = transactionDetails.indexOf("Paid to ") + 8;
+                int dashIndex = transactionDetails.indexOf(" -");
+                if (dashIndex > toIndex) {
+                    String merchant = transactionDetails.substring(toIndex, dashIndex).trim();
+                    type = "Pay " + merchant;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Buy ")) {
+                type = "Shopping";
+                // Extract product name from format: "Buy PRODUCT - PHP 500.00"
+                int buyIndex = transactionDetails.indexOf("Buy ") + 4;
+                int dashIndex = transactionDetails.indexOf(" -");
+                if (dashIndex > buyIndex) {
+                    String product = transactionDetails.substring(buyIndex, dashIndex).trim();
+                    type = "Buy " + product;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            } else if (transactionDetails.contains("Service Fee")) {
+                type = "Service Fee";
+                // Extract what the fee is for: "Service Fee (Bills)", "Service Fee (Load)", etc.
+                int startParen = transactionDetails.indexOf("(");
+                int endParen = transactionDetails.indexOf(")");
+                if (startParen >= 0 && endParen > startParen) {
+                    String feeType = transactionDetails.substring(startParen + 1, endParen).trim();
+                    type = "Fee - " + feeType;
+                }
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
+            }
+            
+            // If no specific type matched, use a descriptive generic label
+            if (type.equals("Transaction")) {
+                // Extract the entire transaction detail as the type
+                if (transactionDetails.length() > 50) {
+                    type = transactionDetails.substring(0, 47) + "...";
+                } else {
+                    type = transactionDetails;
+                }
+                // Try to extract PHP amount if present
+                int phpIndex = transactionDetails.indexOf("PHP");
+                if (phpIndex > 0 && amount.isEmpty()) {
+                    amount = transactionDetails.substring(phpIndex + 3).trim();
+                }
             }
             
             // Transaction type icon
             Label icon = new Label();
-            switch (type) {
-                case "Deposit": icon.setText("➕"); break;
-                case "Withdraw": icon.setText("➖"); break;
-                case "Send": icon.setText("➡️"); break;
-                case "Receive": icon.setText("⬅️"); break;
-                default: icon.setText("📝");
+            if (type.startsWith("Pay ")) {
+                icon.setText("📄");
+            } else if (type.startsWith("Buy ")) {
+                icon.setText("🛍️");
+            } else if (type.startsWith("Load ")) {
+                icon.setText("📱");
+            } else if (type.startsWith("Fee")) {
+                icon.setText("⚙️");
+            } else if (type.startsWith("Send to")) {
+                icon.setText("➡️");
+            } else if (type.startsWith("Receive from")) {
+                icon.setText("⬅️");
+            } else {
+                switch (type) {
+                    case "Deposit": icon.setText("➕"); break;
+                    case "Earned Points": icon.setText("💎"); break;
+                    case "Redeem Points": icon.setText("💸"); break;
+                    case "Redeem Voucher": icon.setText("🎟️"); break;
+                    case "Withdraw": icon.setText("➖"); break;
+                    case "Send": icon.setText("➡️"); break;
+                    case "Receive": icon.setText("⬅️"); break;
+                    case "Service Fee": icon.setText("⚙️"); break;
+                    default: icon.setText("📝");
+                }
             }
             icon.setFont(Font.font(14));
             
@@ -1433,10 +1732,16 @@ public class MainApp extends Application {
             
             detailBox.getChildren().addAll(typeLabel, timeLabel);
             
-            // Amount
+            // Amount - with different styling for points
             Label amountLabel = new Label(amount);
             amountLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
-            amountLabel.setStyle("-fx-text-fill: #10B981;");
+            
+            // Color coding: points in purple, PHP in green
+            if (type.equals("Earned Points") || type.equals("Redeem Points")) {
+                amountLabel.setStyle("-fx-text-fill: #7C3AED;");
+            } else {
+                amountLabel.setStyle("-fx-text-fill: #10B981;");
+            }
             
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -2608,11 +2913,22 @@ public class MainApp extends Application {
         
         UserAccount user = azureApp.getUser(currentUser);
         String vbn = user != null ? user.getVirtualBankNumber() : null;
-        if (vbn == null || vbn.isEmpty()) {
-            vbn = "Not Available";
+        
+        // If no VBN, generate one
+        if ((vbn == null || vbn.isEmpty()) && user != null) {
+            vbn = azurewallet.utils.CardUtil.generateLuhn16();
+            user.setVirtualBankNumber(vbn);
+            azureApp.getFileManager().saveUsers(azureApp.getUsers());
         }
-        String lastFour = vbn.length() >= 4 ? vbn.substring(vbn.length() - 4) : vbn;
-        String maskedCard = "**** **** **** " + lastFour;
+        
+        String maskedCard;
+        if (vbn == null || vbn.isEmpty() || vbn.length() < 4) {
+            maskedCard = "Not Available";
+        } else {
+            // Show only the last 4 digits
+            String lastFour = vbn.substring(vbn.length() - 4);
+            maskedCard = "**** **** **** " + lastFour;
+        }
         
         Label virtualCardTitle = new Label("💳 Azure Virtual Card");
         virtualCardTitle.setFont(Font.font("System", FontWeight.BOLD, baseFont + 1));
@@ -3372,42 +3688,111 @@ public class MainApp extends Application {
     private void showBillsDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Bills Payment");
-        dialog.setHeaderText("Pay a biller");
+        dialog.setHeaderText("Pay your utility bills");
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+        grid.setHgap(12);
+        grid.setVgap(16);
+        grid.setPadding(new Insets(24));
+        grid.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 14;");
 
+        // Biller Selection
+        Label billerLabel = new Label("Select Biller");
+        billerLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        billerLabel.setStyle("-fx-text-fill: #1E293B;");
+        
         ComboBox<String> billerBox = new ComboBox<>();
-        // common utility billers; editable so user can type a custom biller
         billerBox.getItems().addAll("Meralco", "Maynilad", "Manila Water", "PLDT", "Smart Billing", "Globe Billing");
         billerBox.setEditable(true);
         billerBox.setPromptText("Select or type biller name");
+        billerBox.setStyle(
+            "-fx-padding: 10 12; " +
+            "-fx-background-radius: 8; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-font-size: 12;"
+        );
+        billerBox.setMinHeight(40);
+        
+        // Account Number
+        Label accountLabel = new Label("Account Number");
+        accountLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        accountLabel.setStyle("-fx-text-fill: #1E293B;");
+        
         TextField acctField = new TextField();
-        acctField.setPromptText("Account number");
+        acctField.setPromptText("Enter account number");
+        acctField.setStyle(
+            "-fx-padding: 10 12; " +
+            "-fx-background-radius: 8; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-font-size: 12;"
+        );
+        acctField.setMinHeight(40);
+        
+        // Amount
+        Label amountLabel = new Label("Amount to Pay");
+        amountLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        amountLabel.setStyle("-fx-text-fill: #1E293B;");
+        
         TextField amountField = new TextField();
-        amountField.setPromptText("Amount");
-
-        double baseFont = 14;
-        if (scene != null) baseFont = Math.max(12, Math.min(18, scene.getWidth() * 0.035));
-        ColumnConstraints leftCol = new ColumnConstraints(); leftCol.setMinWidth(120); leftCol.setPrefWidth(140); leftCol.setHgrow(Priority.NEVER);
-        ColumnConstraints rightCol = new ColumnConstraints(); rightCol.setHgrow(Priority.ALWAYS);
-        grid.getColumnConstraints().addAll(leftCol, rightCol);
-
-        Label billerLabel = new Label("Biller:"); billerLabel.setFont(Font.font("System", baseFont)); billerLabel.setStyle("-fx-text-fill: #374151;"); billerLabel.setMaxWidth(Double.MAX_VALUE);
-        Label accountLabel = new Label("Account:"); accountLabel.setFont(Font.font("System", baseFont)); accountLabel.setStyle("-fx-text-fill: #374151;"); accountLabel.setMaxWidth(Double.MAX_VALUE);
-        Label amountLabel = new Label("Amount:"); amountLabel.setFont(Font.font("System", baseFont)); amountLabel.setStyle("-fx-text-fill: #374151;"); amountLabel.setMaxWidth(Double.MAX_VALUE);
+        amountField.setPromptText("Enter amount");
+        amountField.setStyle(
+            "-fx-padding: 10 12; " +
+            "-fx-background-radius: 8; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-font-size: 12;"
+        );
+        amountField.setMinHeight(40);
+        
+        // Fee Information
+        Label feeInfoLabel = new Label("Service Fee: 2% (min ₱10)");
+        feeInfoLabel.setFont(Font.font("System", 11));
+        feeInfoLabel.setStyle(
+            "-fx-text-fill: #94A3B8; " +
+            "-fx-padding: 8; " +
+            "-fx-background-color: #F1F5F9; " +
+            "-fx-background-radius: 6; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-radius: 6;"
+        );
 
         grid.add(billerLabel, 0, 0);
-        grid.add(billerBox, 1, 0);
-        grid.add(accountLabel, 0, 1);
-        grid.add(acctField, 1, 1);
-        grid.add(amountLabel, 0, 2);
-        grid.add(amountField, 1, 2);
+        grid.add(billerBox, 0, 1);
+        grid.add(accountLabel, 0, 2);
+        grid.add(acctField, 0, 3);
+        grid.add(amountLabel, 0, 4);
+        grid.add(amountField, 0, 5);
+        grid.add(feeInfoLabel, 0, 6);
 
         dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().setPrefWidth(420);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Style buttons
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setStyle(
+            "-fx-padding: 10 24; " +
+            "-fx-font-size: 13; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: #FFD700; " +
+            "-fx-text-fill: white; " +
+            "-fx-border-radius: 8; " +
+            "-fx-background-radius: 8; " +
+            "-fx-cursor: hand;"
+        );
+        
+        Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelButton.setStyle(
+            "-fx-padding: 10 24; " +
+            "-fx-font-size: 13; " +
+            "-fx-background-color: #E2E8F0; " +
+            "-fx-text-fill: #475569; " +
+            "-fx-border-radius: 8; " +
+            "-fx-background-radius: 8; " +
+            "-fx-cursor: hand;"
+        );
 
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
@@ -3415,14 +3800,121 @@ public class MainApp extends Application {
                     String biller = billerBox.getEditor().getText().trim();
                     String acct = acctField.getText().trim();
                     double amt = Double.parseDouble(amountField.getText().trim());
+                    
+                    if (biller.isEmpty() || acct.isEmpty() || amt <= 0) {
+                        showAlert("Error", "Please fill in all fields with valid values", Alert.AlertType.ERROR);
+                        return;
+                    }
+                    
                     // Compute fee preview (same logic as backend): 2% with minimum ₱10
                     double fee = Math.max(10.0, amt * 0.02);
                     double total = amt + fee;
-                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-                    confirm.setTitle("Confirm Bill Payment");
-                    confirm.setHeaderText("Pay bill and applicable fee");
-                    confirm.setContentText(String.format("You are about to pay ₱%.2f to %s\nService/Tax Fee: ₱%.2f\nTotal: ₱%.2f\nProceed?", amt, biller, fee, total));
-                    confirm.showAndWait().ifPresent(cresp -> {
+                    
+                    // Modern confirmation dialog
+                    Dialog<ButtonType> confirmDialog = new Dialog<>();
+                    confirmDialog.setTitle("Confirm Payment");
+                    confirmDialog.setHeaderText("Review Payment Details");
+                    
+                    GridPane confirmGrid = new GridPane();
+                    confirmGrid.setHgap(12);
+                    confirmGrid.setVgap(14);
+                    confirmGrid.setPadding(new Insets(20));
+                    confirmGrid.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 12;");
+                    
+                    // Biller info
+                    Label billerInfoLabel = new Label("Biller");
+                    billerInfoLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    billerInfoLabel.setStyle("-fx-text-fill: #94A3B8;");
+                    Label billerValue = new Label(biller);
+                    billerValue.setFont(Font.font("System", FontWeight.BOLD, 14));
+                    billerValue.setStyle("-fx-text-fill: #1E293B;");
+                    
+                    // Amount breakdown
+                    Label amountBreakdownLabel = new Label("Amount Breakdown");
+                    amountBreakdownLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+                    amountBreakdownLabel.setStyle("-fx-text-fill: #1E293B; -fx-padding: 12 0 8 0;");
+                    
+                    VBox breakdownBox = new VBox(8);
+                    breakdownBox.setStyle("-fx-background-color: white; -fx-padding: 14; -fx-background-radius: 8; -fx-border-color: #E2E8F0; -fx-border-radius: 8;");
+                    
+                    HBox paymentAmountBox = new HBox();
+                    paymentAmountBox.setSpacing(16);
+                    Label paymentLabel = new Label("Bill Amount:");
+                    paymentLabel.setStyle("-fx-text-fill: #475569; -fx-font-size: 12;");
+                    Label paymentAmountValue = new Label(String.format("₱%.2f", amt));
+                    paymentAmountValue.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    paymentAmountValue.setStyle("-fx-text-fill: #10B981;");
+                    paymentAmountBox.getChildren().addAll(paymentLabel, paymentAmountValue);
+                    HBox.setHgrow(paymentLabel, Priority.ALWAYS);
+                    
+                    HBox feeBox = new HBox();
+                    feeBox.setSpacing(16);
+                    Label feeLabel = new Label("Service Fee (2%):");
+                    feeLabel.setStyle("-fx-text-fill: #475569; -fx-font-size: 12;");
+                    Label feeValue = new Label(String.format("₱%.2f", fee));
+                    feeValue.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    feeValue.setStyle("-fx-text-fill: #F59E0B;");
+                    feeBox.getChildren().addAll(feeLabel, feeValue);
+                    HBox.setHgrow(feeLabel, Priority.ALWAYS);
+                    
+                    Separator separator = new Separator();
+                    separator.setStyle("-fx-border-color: #E2E8F0;");
+                    
+                    HBox totalBox = new HBox();
+                    totalBox.setSpacing(16);
+                    Label totalLabel = new Label("Total to Pay:");
+                    totalLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+                    totalLabel.setStyle("-fx-text-fill: #1E293B;");
+                    Label totalValue = new Label(String.format("₱%.2f", total));
+                    totalValue.setFont(Font.font("System", FontWeight.BOLD, 14));
+                    totalValue.setStyle("-fx-text-fill: #FFD700;");
+                    totalBox.getChildren().addAll(totalLabel, totalValue);
+                    HBox.setHgrow(totalLabel, Priority.ALWAYS);
+                    
+                    breakdownBox.getChildren().addAll(paymentAmountBox, feeBox, separator, totalBox);
+                    
+                    // Warning message
+                    Label warningLabel = new Label("⚠ Please verify all details before confirming");
+                    warningLabel.setFont(Font.font("System", 11));
+                    warningLabel.setStyle("-fx-text-fill: #D97706; -fx-padding: 10; -fx-background-color: #FEF3C7; -fx-background-radius: 6; -fx-border-color: #FCD34D; -fx-border-radius: 6;");
+                    
+                    confirmGrid.add(billerInfoLabel, 0, 0);
+                    confirmGrid.add(billerValue, 0, 1);
+                    confirmGrid.add(amountBreakdownLabel, 0, 2);
+                    confirmGrid.add(breakdownBox, 0, 3);
+                    confirmGrid.add(warningLabel, 0, 4);
+                    
+                    confirmDialog.getDialogPane().setContent(confirmGrid);
+                    confirmDialog.getDialogPane().setPrefWidth(420);
+                    confirmDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+                    
+                    // Style confirmation buttons
+                    Button confirmOkButton = (Button) confirmDialog.getDialogPane().lookupButton(ButtonType.OK);
+                    confirmOkButton.setText("Confirm Payment");
+                    confirmOkButton.setStyle(
+                        "-fx-padding: 12 28; " +
+                        "-fx-font-size: 13; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-background-color: #FFD700; " +
+                        "-fx-text-fill: #1E293B; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;"
+                    );
+                    
+                    Button confirmCancelButton = (Button) confirmDialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+                    confirmCancelButton.setText("Cancel");
+                    confirmCancelButton.setStyle(
+                        "-fx-padding: 12 28; " +
+                        "-fx-font-size: 13; " +
+                        "-fx-background-color: #E2E8F0; " +
+                        "-fx-text-fill: #475569; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;"
+                    );
+                    
+                    confirmDialog.showAndWait().ifPresent(cresp -> {
                         if (cresp == ButtonType.OK) {
                             if (azureApp.billsPayment(currentUser, biller, acct, amt)) {
                                 showAlert("Success", String.format("Paid ₱%.2f to %s (Fee: ₱%.2f)", amt, biller, fee), Alert.AlertType.INFORMATION);
@@ -5096,6 +5588,17 @@ public class MainApp extends Application {
                 
                 // Process payment using withdraw method
                 user.withdraw(priceAmount);
+                
+                // Log shopping transaction
+                azureApp.getFileManager().logTransaction(currentUser, "Buy " + productName, priceAmount);
+                
+                // Award points: 1 point per ₱1000 spent
+                int points = (int)(priceAmount / 1000.0);
+                if (points > 0) {
+                    user.addPoints(points);
+                    azureApp.getFileManager().logPoints(currentUser, "earned", points, "Buy " + productName + " PHP " + priceAmount);
+                }
+                
                 azureApp.getFileManager().saveUsers(azureApp.getUsers());
                 
                 // Show success dialog with transaction details

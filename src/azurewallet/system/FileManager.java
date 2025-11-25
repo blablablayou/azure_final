@@ -98,6 +98,12 @@ public class FileManager {
                         Integer.parseInt(p[7]),
                         Long.parseLong(p[8])
                     );
+                    // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, loyaltyTier, transactionPin
+                    if (p.length > 9) acc.setVirtualBankNumber(p[9].isEmpty() ? null : p[9]);
+                    if (p.length > 10) acc.setCardCVV(p[10].isEmpty() ? null : p[10]);
+                    if (p.length > 11) acc.setCardExpiryDate(p[11].isEmpty() ? null : p[11]);
+                    if (p.length > 12) acc.setLoyaltyTier(p[12].isEmpty() ? "Classic" : p[12]);
+                    if (p.length > 13) acc.setTransactionPin(p[13].isEmpty() ? null : p[13]);
                     users.put(p[0], acc);
                 }
             }
@@ -216,7 +222,9 @@ public class FileManager {
         try (BufferedReader br = new BufferedReader(new FileReader(TRANSACTIONS_FILE))) {
             String line;
             while ((line = br.readLine()) != null) {
-                if (line.contains(username)) lines.add(line);
+                // Check if line contains " - username:" pattern to match only transactions logged for this user
+                // This avoids matching the username when it appears in "Send to username" or "Receive from username"
+                if (line.contains(" - " + username + ":")) lines.add(line);
             }
         } catch (IOException e) {
             // ignore and return what we have
@@ -239,9 +247,10 @@ public class FileManager {
             }
 
             // collect indices of lines that belong to the user
+            // Use " - username:" pattern to match only transactions logged for this user
             List<Integer> userIdx = new ArrayList<>();
             for (int i = 0; i < all.size(); i++) {
-                if (all.get(i).contains(username)) userIdx.add(i);
+                if (all.get(i).contains(" - " + username + ":")) userIdx.add(i);
             }
 
             // determine which indices to remove (last `count` entries)
@@ -335,6 +344,7 @@ public class FileManager {
     
     public void clearTransactionHistory(String username) {
         try {
+            // Clear transactions
             List<String> all = new ArrayList<>();
             try (BufferedReader br = new BufferedReader(new FileReader(TRANSACTIONS_FILE))) {
                 String line;
@@ -348,6 +358,44 @@ public class FileManager {
                         pw.println(line);
                     }
                 }
+            }
+            
+            // Clear voucher logs
+            try {
+                List<String> voucherLines = new ArrayList<>();
+                try (BufferedReader br = new BufferedReader(new FileReader(VOUCHER_LOG_FILE))) {
+                    String line;
+                    while ((line = br.readLine()) != null) voucherLines.add(line);
+                }
+
+                try (PrintWriter pw = new PrintWriter(new FileWriter(VOUCHER_LOG_FILE))) {
+                    for (String line : voucherLines) {
+                        if (!line.contains(username)) {
+                            pw.println(line);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                // Ignore if voucher log doesn't exist
+            }
+            
+            // Clear points logs
+            try {
+                List<String> pointsLines = new ArrayList<>();
+                try (BufferedReader br = new BufferedReader(new FileReader(POINTS_LOG_FILE))) {
+                    String line;
+                    while ((line = br.readLine()) != null) pointsLines.add(line);
+                }
+
+                try (PrintWriter pw = new PrintWriter(new FileWriter(POINTS_LOG_FILE))) {
+                    for (String line : pointsLines) {
+                        if (!line.contains(username)) {
+                            pw.println(line);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                // Ignore if points log doesn't exist
             }
         } catch (IOException e) {
             System.out.println("| Error clearing transaction history: " + e.getMessage());
