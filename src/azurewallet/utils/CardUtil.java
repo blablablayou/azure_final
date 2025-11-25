@@ -1,84 +1,43 @@
 package azurewallet.utils;
 
-import java.time.YearMonth;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-/**
- * Utility class for card-related operations
- */
-public class CardUtil {
-    
-    /**
-     * Format a card number to display format (XXXX XXXX XXXX XXXX)
-     * @param cardNumber The full card number
-     * @return Formatted card number
-     */
-    public static String formatCardNumber(String cardNumber) {
-        if (cardNumber == null || cardNumber.isEmpty()) {
-            return "";
-        }
-        
-        // Remove any existing spaces
-        String cleaned = cardNumber.replaceAll("\\s+", "");
-        
-        // Format as XXXX XXXX XXXX XXXX
-        if (cleaned.length() == 16) {
-            return cleaned.substring(0, 4) + " " +
-                   cleaned.substring(4, 8) + " " +
-                   cleaned.substring(8, 12) + " " +
-                   cleaned.substring(12, 16);
-        }
-        
-        return cardNumber;
-    }
-    
-    /**
-     * Generate a card expiry date (MM/YY) valid for 5 years
-     * @return Expiry date in MM/YY format
-     */
-    public static String generateExpiry() {
-        YearMonth expiryMonth = YearMonth.now().plusYears(5);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        return expiryMonth.format(formatter);
-    }
-    
-    /**
-     * Generate a random 3-digit CVV
-     * @return Random CVV as string
-     */
-    public static String generateCVV() {
-        return String.format("%03d", (int)(Math.random() * 1000));
-    }
-    
-    /**
-     * Validate card number using Luhn algorithm
-     * @param cardNumber The card number to validate
-     * @return true if valid, false otherwise
-     */
-    public static boolean isValidCardNumber(String cardNumber) {
-        String cleaned = cardNumber.replaceAll("\\s+", "");
-        
-        if (!cleaned.matches("\\d{16}")) {
-            return false;
-        }
-        
+public final class CardUtil {
+
+    private CardUtil() {}
+
+    public static String generateLuhn16() {
+        java.util.Random rnd = new java.util.Random();
+        int[] digits = new int[16];
+        for (int i = 0; i < 15; i++) digits[i] = rnd.nextInt(10);
         int sum = 0;
-        boolean alternate = false;
-        
-        for (int i = cleaned.length() - 1; i >= 0; i--) {
-            int digit = Character.getNumericValue(cleaned.charAt(i));
-            
-            if (alternate) {
-                digit *= 2;
-                if (digit > 9) {
-                    digit = (digit % 10) + 1;
-                }
+        for (int i = 0; i < 15; i++) {
+            int val = digits[14 - i];
+            if ((i % 2) == 0) {
+                int dbl = val * 2;
+                if (dbl > 9) dbl -= 9;
+                sum += dbl;
+            } else {
+                sum += val;
             }
-            
-            sum += digit;
-            alternate = !alternate;
         }
-        
-        return (sum % 10) == 0;
+        int check = (10 - (sum % 10)) % 10;
+        digits[15] = check;
+        StringBuilder sb = new StringBuilder();
+        for (int d : digits) sb.append(d);
+        return sb.toString();
+    }
+
+    public static String formatCardNumber(String num) {
+        if (num == null) return "";
+        return num.replaceAll("(.{4})", "$1 ").trim();
+    }
+
+    public static String generateExpiry() {
+        // Use a 5-year validity for generated virtual cards
+        LocalDate d = LocalDate.now().plusYears(5);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/yy");
+        return d.format(fmt);
     }
 }

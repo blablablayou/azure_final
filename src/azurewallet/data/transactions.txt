@@ -27,11 +27,4 @@
 2025-11-24T22:35:56.906744600 - wowi: Deposit via GCash (ref AZR-165022) - PHP 6,875.00
 2025-11-24T22:37:29.492075100 - wowi: Withdraw to GCash - ganice (12345678098) - PHP 4,000.00
 2025-11-24T23:05:32.227272300 - cessmoto: Deposit via GCash (ref AZR-669286) - PHP 10,000.00
-qwe: Deposited 5000.0 from PayMaya (ref AZR-602153)
-qwe: Deposited 2000.0 from PayMaya (ref AZR-732531)
-qwe: Deposited 10000.0 from PayMaya (ref AZR-699891)
-qwe: Withdrew 500.0 via BDO - tutop jaycee (13054844564)
-qwe: Deposited 100.0 from GCash (ref AZR-884156)
-qwe paid bill to Manila Water: 200.0
-qwe bought 50.0 load from Globe/TM
-qwe: Deposited 100.0 from GCash (ref AZR-382516)
+2025-11-25T13:06:55.702941 - qwe: Deposit via BPI (ref AZR-342784) - PHP 5,000.00
