@@ -172,7 +172,7 @@ public class MainApp extends Application {
         forgotRow.setAlignment(Pos.CENTER);
         Label forgotLabel = new Label("Forgot your PIN?");
         forgotLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
-        Hyperlink forgotLink = new Hyperlink("Reset it");
+        Hyperlink forgotLink = new Hyperlink("Reset");
         forgotLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
         forgotLink.setOnAction(e -> showForgotPinDialog());
         forgotRow.getChildren().addAll(forgotLabel, forgotLink);
