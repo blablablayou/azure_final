@@ -1,9 +1,0 @@
-WARNING: A restricted method in java.lang.System has been called
-WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in module javafx.graphics (file:/C:/Users/karll/javafx-sdk-25/javafx-sdk-25.0.1/lib/javafx.graphics.jar)
-WARNING: Use --enable-native-access=javafx.graphics to avoid a warning for callers in this module
-WARNING: Restricted methods will be blocked in a future release unless native access is enabled
-
-+----------------------------------------------------------+
-| Data directory initialized: C:\Users\karll\Downloads\sss\azure_final/src/azurewallet/data/
-+----------------------------------------------------------+
-Monthly interest applied to all users.

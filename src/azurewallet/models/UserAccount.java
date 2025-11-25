@@ -79,6 +79,7 @@ public class UserAccount {
     public String getUsername() { return username; }
     public String getMobile() { return mobile; }
     public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
     public int getPoints() { return points; }
     public double getTotalTransacted() { return totalTransacted; }
     public String getRank() { return rank; }

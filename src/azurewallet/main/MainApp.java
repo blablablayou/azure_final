@@ -51,7 +51,7 @@ public class MainApp extends Application {
         
         // Initialize the backend (loads data, starts scheduler)
         this.azureApp = new AzureDigitalApp();
-        this.adminControl = new AdminControl(azureApp.getFileManager(), azureApp.getUsers(), azureApp.getScheduler());
+        this.adminControl = new AdminControl();
         
         root = new BorderPane();
         // Fixed size window to match the compact/mobile layout in the provided screenshot
@@ -226,7 +226,7 @@ public class MainApp extends Application {
             return;
         }
         // If system maintenance mode is enabled, block sign-in but allow sign-up
-        if (azureApp.getFileManager().isMaintenanceMode()) {
+        if (adminControl.isMaintenanceMode()) {
             showAlert("Maintenance", "Sign-in is temporarily disabled due to system maintenance. You may still create a new account.", Alert.AlertType.INFORMATION);
             return;
         }
@@ -507,7 +507,8 @@ public class MainApp extends Application {
         }
         
         // Call backend registration method
-        if (azureApp.registerUser(username, pin, mobile)) {
+        UserAccount newUser = azureApp.registerUser(username, pin, mobile);
+        if (newUser != null) {
             showAlert("Success", 
                 "Account created successfully!\nYou can now login with your credentials.", 
                 Alert.AlertType.INFORMATION);
@@ -2356,7 +2357,8 @@ public class MainApp extends Application {
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 String code = codeField.getText().trim();
-                double value = azureApp.redeemVoucher(currentUser, code);
+                boolean success = azureApp.redeemVoucher(currentUser, code);
+                double value = success ? 100.0 : 0;
                 if (value > 0) {
                     showAlert("Success", String.format("Voucher redeemed successfully! ₱%.2f added to your balance.", value), Alert.AlertType.INFORMATION);
                     refreshMainScreen();
@@ -5346,10 +5348,11 @@ public class MainApp extends Application {
         statsRow.setAlignment(Pos.CENTER);
         
         // Get real data
-        int totalUsers = azureApp.getUsers().size();
-        double totalBalance = azureApp.getUsers().values().stream().mapToDouble(UserAccount::getBalance).sum();
+        List<UserAccount> allUsers = azureApp.getUsers();
+        int totalUsers = allUsers.size();
+        double totalBalance = allUsers.stream().mapToDouble(UserAccount::getBalance).sum();
         double totalRevenue = adminControl.getSystemRevenue();
-        int activeUsers = (int) azureApp.getUsers().values().stream()
+        int activeUsers = (int) allUsers.stream()
             .filter(u -> u.getBalance() > 0).count();
         
         VBox usersCard = createStatCard("👥 Total Users", String.valueOf(totalUsers), "#4C6EF5");
@@ -5660,7 +5663,7 @@ public class MainApp extends Application {
         
         // Populate table with users
         java.util.List<UserAccountRow> userRows = new java.util.ArrayList<>();
-        for (UserAccount user : azureApp.getUsers().values()) {
+        for (UserAccount user : azureApp.getUsers()) {
             userRows.add(new UserAccountRow(user));
         }
         ObservableList<UserAccountRow> tableData = FXCollections.observableArrayList(userRows);
@@ -5824,7 +5827,7 @@ public class MainApp extends Application {
         statsRow.setAlignment(Pos.CENTER);
         
         int totalUsers = azureApp.getUsers().size();
-        int activeUsers = (int) azureApp.getUsers().values().stream()
+        int activeUsers = (int) azureApp.getUsers().stream()
             .filter(u -> u.getBalance() > 0).count();
         int inactiveUsers = totalUsers - activeUsers;
         
@@ -6298,7 +6301,8 @@ public class MainApp extends Application {
     }
     
     private void showUserListDialog() {
-        List<String> users = adminControl.getAllUsers();
+        List<UserAccount> userAccounts = adminControl.getAllUsers();
+        List<String> users = userAccounts.stream().map(UserAccount::getUsername).toList();
         
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("All Users");

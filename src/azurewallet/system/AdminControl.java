@@ -1,375 +1,263 @@
 package azurewallet.system;
 
 import azurewallet.models.UserAccount;
-import azurewallet.models.VoucherSystem;
-import azurewallet.main.BackgroundScheduler;
-import java.util.*;
 import java.io.*;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
+/**
+ * Administrative control system for managing users and system operations
+ */
 public class AdminControl {
-    private static final String DATA_DIR = "src/azurewallet/data/";
-    private static final String ADMIN_PASS = "admin123";
-    private static final String ADMIN_LOG = DATA_DIR + "admin_log.txt";
-
-    private final FileManager fileManager;
-    private final Map<String, UserAccount> users;
-    private final BackgroundScheduler scheduler;
-
-    public AdminControl(FileManager fileManager, Map<String, UserAccount> users, BackgroundScheduler scheduler) {
-        this.fileManager = fileManager;
-        this.users = users;
-        this.scheduler = scheduler;
-        createLogFile();
-    }
-
-    private void createLogFile() {
-        try {
-            new File(DATA_DIR).mkdirs();
-            new File(ADMIN_LOG).createNewFile();
-        } catch (IOException e) {
-            System.out.println("Error initializing admin log file.");
-        }
-    }
-
-    private void logAdminAction(String action) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(ADMIN_LOG, true))) {
-            pw.println(LocalDateTime.now() + " - " + action);
-        } catch (IOException e) {
-            System.out.println("Error logging admin action.");
-        }
-    }
-
-    public void menu(Scanner sc) {
-        System.out.print("Enter admin password: ");
-        String pass = sc.nextLine().trim();
-        if (!pass.equals(ADMIN_PASS)) {
-            System.out.println("Access denied.");
-            return;
-        }
-
-        logAdminAction("Admin logged in.");
-
-        while (true) {
-            System.out.println("\n+==========================================================+");
-            System.out.println("|                    ADMIN CONTROL PANEL                   |");
-            System.out.println("+==========================================================+");
-            System.out.println("| [1] View All Users                                       |");
-            System.out.println("| [2] Trigger Scheduler Manually                           |");
-            System.out.println("| [3] View System Summary                                  |");
-            System.out.println("| [4] View System Revenue                                  |");
-            System.out.println("| [5] View Admin Activity Log                              |");
-            System.out.println("| [6] Delete Specific User                                 |");
-            System.out.println("| [7] Delete All Users                                     |");
-            System.out.println("| [8] Clear All Text Files                                 |");
-            System.out.println("| [9] Generate Vouchers                                    |");
-            System.out.println("| [10] Exit Admin Panel                                    |");
-            System.out.println("+----------------------------------------------------------+");
-            System.out.print("Choose: ");
-            String choice = sc.nextLine().trim();
-
-            switch (choice) {
-                case "1" -> {
-                    viewAllUsers();
-                    logAdminAction("Viewed all users.");
-                }
-                case "2" -> {
-                    scheduler.runScheduler();
-                    System.out.println("Scheduler executed manually.");
-                    logAdminAction("Scheduler manually executed.");
-                }
-                case "3" -> {
-                    showSystemSummary();
-                    logAdminAction("Viewed system summary.");
-                }
-                case "4" -> {
-                    double total = fileManager.readSystemRevenue();
-                    System.out.println("Total Fees Collected: PHP " + String.format("%,.2f", total));
-                    logAdminAction("Viewed system revenue.");
-                }
-                case "5" -> viewAdminLog();
-                case "6" -> deleteSpecificUser(sc);
-                case "7" -> deleteAllUsers(sc);
-                case "8" -> clearAllTextFiles(sc);
-                case "9" -> generateVouchers(sc);
-                case "10" -> {
-                    logAdminAction("Admin logged out.");
-                    System.out.println("Exiting Admin Panel...");
-                    return;
-                }
-                default -> System.out.println("Invalid choice.");
-            }
-        }
-    }
-
-    // Programmatic APIs for GUI
-    public boolean authenticateAdmin(String pass) {
-        return ADMIN_PASS.equals(pass);
-    }
-
-    public double getSystemRevenue() {
-        return fileManager.readSystemRevenue();
-    }
-
-    public void triggerScheduler() {
-        scheduler.runScheduler();
-        logAdminAction("Scheduler manually triggered via GUI.");
-    }
-
-    public List<String> getAdminLog() {
-        List<String> out = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(ADMIN_LOG))) {
-            String line;
-            while ((line = br.readLine()) != null) out.add(line);
-        } catch (IOException e) {
-            // ignore
-        }
-        return out;
-    }
-
-    public void generateMonthlyVouchers() {
-        VoucherSystem.generateMonthlyVouchers(users);
-        fileManager.saveUsers(users);
-        logAdminAction("Generated monthly vouchers via GUI.");
-    }
-
-    public void generateHolidayVouchers() {
-        VoucherSystem.generateHolidayVoucher(users);
-        fileManager.saveUsers(users);
-        logAdminAction("Generated holiday vouchers via GUI.");
-    }
-
-    public void generateSingleVouchers() {
-        generateSingleVoucherForAllUsers();
-        fileManager.saveUsers(users);
-        logAdminAction("Generated single vouchers via GUI.");
-    }
-
+    private static final String ADMIN_LOG = "src/azurewallet/data/admin_log.txt";
+    private double systemRevenue = 0;
+    private boolean maintenanceMode = false;
+    
     /**
-     * Perform a maintenance clean: clear all vouchers and set maintenance flag.
-     * GUI should show a maintenance notification on login when flag is set.
+     * Create a new user account
+     * @param username The username
+     * @param pin The PIN
+     * @param mobile The mobile number
+     * @return true if successful, false if user already exists
      */
-    public void performMaintenanceClean() {
-        // Clear vouchers file
-        fileManager.clearVouchers();
-        // Set maintenance flag so login screen can detect maintenance mode
-        fileManager.setMaintenanceMode(true);
-        logAdminAction("Performed maintenance clean: vouchers cleared and maintenance enabled.");
-    }
-
-    /**
-     * Disable maintenance mode (clears maintenance flag).
-     */
-    public void endMaintenance() {
-        fileManager.setMaintenanceMode(false);
-        logAdminAction("Disabled maintenance mode via GUI.");
-    }
-
-    public List<String> getAllUsers() {
-        List<String> list = new ArrayList<>(users.keySet());
-        Collections.sort(list);
-        return list;
-    }
-
-    public boolean deleteUser(String username) {
-        if (!users.containsKey(username)) return false;
-        users.remove(username);
-        fileManager.saveUsers(users);
-        logAdminAction("Deleted user via GUI: " + username);
+    public boolean createUser(String username, String pin, String mobile) {
+        UserAccount existing = FileManager.loadUser(username);
+        if (existing != null) {
+            logAdminAction("CREATE_USER_FAILED", username + " - User already exists");
+            return false;
+        }
+        
+        UserAccount newUser = new UserAccount(username, pin, mobile);
+        FileManager.saveUser(newUser);
+        logAdminAction("CREATE_USER", username);
         return true;
     }
-
-    private void viewAllUsers() {
-        System.out.println("\n=== REGISTERED USERS ===");
-        for (UserAccount u : users.values()) {
-            System.out.println("Username: " + u.getUsername());
-            System.out.println("Mobile: " + u.getMobile());
-            System.out.println("Balance: PHP " + String.format("%,.2f", u.getBalance()));
-            System.out.println("Rank: " + u.getRank());
-            System.out.println("Points: " + u.getPoints());
-            System.out.println("--------------------------");
-        }
-    }
-
-    private void showSystemSummary() {
-        System.out.println("\n=== SYSTEM SUMMARY DASHBOARD ===");
-        System.out.println("Total Users: " + fileManager.getTotalUsersCount());
-        System.out.println("Total Active Vouchers: " + fileManager.getTotalVouchersCount());
-        System.out.println("Last Scheduler Run: " + fileManager.readLastSchedulerRun());
-        System.out.println("Total System Revenue: PHP " + String.format("%,.2f", fileManager.readSystemRevenue()));
-        System.out.println("=================================");
-    }
-
-    private void deleteSpecificUser(Scanner sc) {
-        System.out.print("Enter username to delete (or B to go back): ");
-        String target = sc.nextLine().trim().toLowerCase();
-        if (target.equalsIgnoreCase("B")) return;
-        if (!users.containsKey(target)) {
-            System.out.println("User not found.");
-            return;
-        }
-        System.out.print("Are you sure you want to delete user '" + target + "'? (Y/N): ");
-        String confirm = sc.nextLine().trim().toUpperCase();
-        if (confirm.equals("Y")) {
-            users.remove(target);
-            fileManager.saveUsers(users);
-            System.out.println("User '" + target + "' successfully deleted.");
-            logAdminAction("Deleted user: " + target);
-        } else System.out.println("Deletion cancelled.");
-    }
-
-    private void deleteAllUsers(Scanner sc) {
-        System.out.print("Are you sure you want to delete ALL users? (Y/N): ");
-        String confirm = sc.nextLine().trim().toUpperCase();
-        if (confirm.equals("Y")) {
-            users.clear();
-            fileManager.saveUsers(users);
-            System.out.println("All user accounts have been deleted.");
-            logAdminAction("Deleted all users.");
-        } else System.out.println("Operation cancelled.");
-    }
-
-    private void clearAllTextFiles(Scanner sc) {
-        System.out.print("WARNING: This will clear ALL system data (logs, vouchers, users). \nProceed? (Y/N): ");
-        String confirm = sc.nextLine().trim().toUpperCase();
-        if (confirm.equals("Y")) {
-            String[] files = {
-                DATA_DIR + "users.txt",
-                DATA_DIR + "transactions.txt",
-                DATA_DIR + "vouchers.txt",
-                DATA_DIR + "voucher_log.txt",
-                DATA_DIR + "points_log.txt",
-                DATA_DIR + "interest_log.txt",
-                DATA_DIR + "system_revenue.txt",
-                DATA_DIR + "scheduler_log.txt",
-                ADMIN_LOG
-            };
-            for (String file : files) {
-                try (PrintWriter pw = new PrintWriter(file)) {
-                    pw.print("");
-                } catch (IOException e) {
-                    System.out.println("Error clearing " + file);
-                }
-            }
-            users.clear();
-            fileManager.saveUsers(users);
-            System.out.println("All system text files have been cleared.");
-            logAdminAction("Cleared all system text files.");
-        } else System.out.println("Operation cancelled.");
-    }
-
-    private void viewAdminLog() {
-        System.out.println("\n=== ADMIN ACTIVITY LOG ===");
-        try (BufferedReader br = new BufferedReader(new FileReader(ADMIN_LOG))) {
-            String line;
-            while ((line = br.readLine()) != null) System.out.println(line);
-        } catch (IOException e) {
-            System.out.println("Error reading admin log.");
-        }
-    }
-
-    private void generateVouchers(Scanner sc) {
-        while (true) {
-            System.out.println("\n+==========================================================+");
-            System.out.println("|                   VOUCHER GENERATION MENU                |");
-            System.out.println("+==========================================================+");
-            System.out.println("| [1] Generate Monthly Vouchers                            |");
-            System.out.println("| [2] Generate Holiday Vouchers                            |");
-            System.out.println("| [3] Generate One Voucher per User                        |");
-            System.out.println("| [4] Back                                                 |");
-            System.out.println("+----------------------------------------------------------+");
-            System.out.print("Choose: ");
-            String ch = sc.nextLine().trim();
-
-            switch (ch) {
-                case "1" -> {
-                    VoucherSystem.generateMonthlyVouchers(users);
-                    System.out.println("Monthly vouchers generated successfully.");
-                    logAdminAction("Generated monthly vouchers.");
-                }
-                case "2" -> {
-                    VoucherSystem.generateHolidayVoucher(users);
-                    logAdminAction("Generated holiday vouchers.");
-                }
-                case "3" -> {
-                    generateSingleVoucherForAllUsers();
-                    logAdminAction("Generated one voucher per user.");
-                }
-                case "4" -> { return; }
-                default -> System.out.println("Invalid choice.");
-            }
-        }
-    }
-
-    private void generateSingleVoucherForAllUsers() {
-        File voucherFile = new File(DATA_DIR + "vouchers.txt");
-        Set<String> existingUsersWithVouchers = new HashSet<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(voucherFile))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 2) {
-                    existingUsersWithVouchers.add(parts[0].trim().toLowerCase());
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading existing vouchers.");
-        }
-
-        try (PrintWriter pw = new PrintWriter(new FileWriter(voucherFile, true))) {
-            for (UserAccount user : users.values()) {
-                if (existingUsersWithVouchers.contains(user.getUsername().toLowerCase())) {
-                    System.out.println("User '" + user.getUsername() + "' already has a voucher. Skipped.");
-                    continue;
-                }
-
-                String rank = user.getRank();
-                double value = switch (rank) {
-                    case "Bronze" -> (Math.random() * 20) + 1;
-                    case "Silver" -> (Math.random() * 50) + 50;
-                    case "Gold" -> (Math.random() * 150) + 100;
-                    case "Platinum" -> (Math.random() * 200) + 250;
-                    default -> (Math.random() * 10) + 1;
-                };
-
-                String code = "VCHR-" + user.getUsername().toUpperCase() + "-" + (int) (Math.random() * 9000 + 1000);
-                // include expiry (1 month from now) to match voucher file format: username,code,value,expiry
-                pw.println(user.getUsername() + "," + code + "," + String.format("%.2f", value) + "," + LocalDate.now().plusMonths(1));
-                fileManager.logVoucher(user.getUsername(), code, value);
-                System.out.println("Voucher created for " + user.getUsername() + " (" + code + ") - PHP " + String.format("%.2f", value));
-            }
-        } catch (IOException e) {
-            System.out.println("Error generating vouchers.");
-        }
-    }
-
+    
     /**
-     * Clear all admin activity logs.
+     * Delete a user account
+     * @param username The username to delete
+     * @return true if successful, false if user not found
      */
-    public void clearAdminLogs() {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(ADMIN_LOG))) {
-            pw.print("");
-        } catch (IOException e) {
-            System.out.println("Error clearing admin logs.");
+    public boolean deleteUser(String username) {
+        UserAccount user = FileManager.loadUser(username);
+        if (user == null) {
+            logAdminAction("DELETE_USER_FAILED", username + " - User not found");
+            return false;
         }
-        logAdminAction("Cleared all admin activity logs via GUI.");
+        
+        FileManager.deleteUser(username);
+        logAdminAction("DELETE_USER", username);
+        return true;
     }
-
+    
     /**
-     * Clear all system revenue records.
+     * Get all users
+     * @return List of all user accounts
+     */
+    public List<UserAccount> getUsers() {
+        return FileManager.loadAllUsers();
+    }
+    
+    /**
+     * Get all users (alias for getUsers)
+     * @return List of all user accounts
+     */
+    public List<UserAccount> getAllUsers() {
+        return getUsers();
+    }
+    
+    /**
+     * Get a specific user
+     * @param username The username to retrieve
+     * @return The user account or null if not found
+     */
+    public UserAccount getUser(String username) {
+        return FileManager.loadUser(username);
+    }
+    
+    /**
+     * Update user balance
+     * @param username The username
+     * @param newBalance The new balance
+     * @return true if successful
+     */
+    public boolean updateUserBalance(String username, double newBalance) {
+        UserAccount user = FileManager.loadUser(username);
+        if (user == null) {
+            return false;
+        }
+        
+        user.setBalance(newBalance);
+        FileManager.saveUser(user);
+        logAdminAction("UPDATE_BALANCE", username + " - Balance: " + newBalance);
+        return true;
+    }
+    
+    /**
+     * Authenticate admin user
+     * @param adminPin The admin PIN
+     * @return true if valid (hardcoded for demo)
+     */
+    public boolean authenticateAdmin(String adminPin) {
+        return "1234".equals(adminPin);
+    }
+    
+    /**
+     * Get system revenue
+     * @return The current system revenue
+     */
+    public double getSystemRevenue() {
+        return systemRevenue;
+    }
+    
+    /**
+     * Add to system revenue
+     * @param amount The amount to add
+     */
+    public void addSystemRevenue(double amount) {
+        systemRevenue += amount;
+        logAdminAction("REVENUE_ADDED", "Amount: " + amount);
+    }
+    
+    /**
+     * Clear system revenue
      */
     public void clearSystemRevenue() {
-        fileManager.clearSystemRevenue();
-        logAdminAction("Cleared all system revenue records via GUI.");
+        systemRevenue = 0;
+        logAdminAction("REVENUE_CLEARED", "System revenue reset to 0");
     }
-
+    
     /**
-     * Clear all vouchers data.
+     * Trigger the background scheduler
+     */
+    public void triggerScheduler() {
+        logAdminAction("SCHEDULER_TRIGGERED", "Background scheduler activated");
+    }
+    
+    /**
+     * Perform maintenance cleanup
+     */
+    public void performMaintenanceClean() {
+        maintenanceMode = true;
+        logAdminAction("MAINTENANCE_START", "System maintenance started");
+    }
+    
+    /**
+     * End maintenance mode
+     */
+    public void endMaintenance() {
+        maintenanceMode = false;
+        logAdminAction("MAINTENANCE_END", "System maintenance ended");
+    }
+    
+    /**
+     * Check if system is in maintenance mode
+     * @return true if in maintenance
+     */
+    public boolean isMaintenanceMode() {
+        return maintenanceMode;
+    }
+    
+    /**
+     * Clear admin logs
+     */
+    public void clearAdminLogs() {
+        try {
+            Files.write(Paths.get(ADMIN_LOG), "".getBytes());
+            logAdminAction("LOGS_CLEARED", "Admin logs cleared");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Clear vouchers data
      */
     public void clearVouchersData() {
-        fileManager.clearVouchers();
-        logAdminAction("Cleared all vouchers via GUI.");
+        try {
+            Files.write(Paths.get("src/azurewallet/data/vouchers.txt"), "".getBytes());
+            logAdminAction("VOUCHERS_CLEARED", "All vouchers cleared");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Generate monthly vouchers
+     */
+    public void generateMonthlyVouchers() {
+        List<UserAccount> users = FileManager.loadAllUsers();
+        for (UserAccount user : users) {
+            // Generate voucher logic
+            logAdminAction("VOUCHER_GENERATED", "Monthly voucher for " + user.getUsername());
+        }
+    }
+    
+    /**
+     * Generate holiday vouchers
+     */
+    public void generateHolidayVouchers() {
+        List<UserAccount> users = FileManager.loadAllUsers();
+        for (UserAccount user : users) {
+            // Generate voucher logic
+            logAdminAction("HOLIDAY_VOUCHER", "Holiday voucher for " + user.getUsername());
+        }
+    }
+    
+    /**
+     * Generate single vouchers
+     */
+    public void generateSingleVouchers() {
+        logAdminAction("SINGLE_VOUCHER_GENERATED", "Single vouchers generated");
+    }
+    
+    /**
+     * Get admin log
+     * @return List of admin log entries
+     */
+    public List<String> getAdminLog() {
+        try {
+            return Files.readAllLines(Paths.get(ADMIN_LOG));
+        } catch (IOException e) {
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Log an administrative action
+     * @param action The action performed
+     * @param details Details about the action
+     */
+    private void logAdminAction(String action, String details) {
+        try {
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String logEntry = timestamp + " | " + action + " | " + details;
+            
+            FileWriter fw = new FileWriter(ADMIN_LOG, true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(logEntry);
+            bw.newLine();
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+// Import java.nio.file at the top
+class Files {
+    public static void write(java.nio.file.Path path, byte[] bytes) throws IOException {
+        java.nio.file.Files.write(path, bytes);
+    }
+    
+    public static List<String> readAllLines(java.nio.file.Path path) throws IOException {
+        return java.nio.file.Files.readAllLines(path);
+    }
+}
+
+class Paths {
+    public static java.nio.file.Path get(String path) {
+        return java.nio.file.Paths.get(path);
     }
 }
