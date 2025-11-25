@@ -1,33 +1,74 @@
 package azurewallet.main;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.layout.Priority;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.stage.Stage;
+import javafx.geometry.VPos;
 import javafx.scene.Group;
-import javafx.scene.shape.*;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.application.Platform;
-import javafx.animation.FadeTransition;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
-import javafx.animation.TranslateTransition;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.RowConstraints;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Arc;
+import javafx.scene.shape.ArcType;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import javafx.util.Duration;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.beans.property.StringProperty;
-import javafx.beans.property.SimpleStringProperty;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import azurewallet.utils.CardUtil;
 import azurewallet.models.UserAccount;
 import azurewallet.system.AdminControl;
@@ -2092,14 +2133,15 @@ public class MainApp extends Application {
                     countdownLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
                     countdownLabel.setStyle("-fx-text-fill: #92400E;");
                     
-                    Label timerDisplay = new Label("10");
+                    Label timerDisplay = new Label("5");
                     timerDisplay.setFont(Font.font("System", FontWeight.BOLD, 36));
                     timerDisplay.setStyle("-fx-text-fill: #DC2426; -fx-alignment: center;");
                     
-                    Button returnNowBtn = new Button("Return to Wallet Now");
+                    Button returnNowBtn = new Button("Returning to Wallet...");
+                    returnNowBtn.setDisable(true);
                     returnNowBtn.setStyle(
-                        "-fx-background-color: #FFD700; " +
-                        "-fx-text-fill: #1F2937; " +
+                        "-fx-background-color: #CCCCCC; " +
+                        "-fx-text-fill: #666666; " +
                         "-fx-font-weight: bold; " +
                         "-fx-padding: 10 20; " +
                         "-fx-border-radius: 8; " +
@@ -2114,20 +2156,20 @@ public class MainApp extends Application {
                     }
                     content.getChildren().add(timerBox);
                     
-                    // 10-second countdown with proper closure
+                    // 5-second countdown with proper closure
                     javafx.animation.Timeline countdownTimeline = new javafx.animation.Timeline();
                     
-                    for (int i = 0; i < 11; i++) {
+                    for (int i = 0; i < 6; i++) {
                         final int sec = i;
                         countdownTimeline.getKeyFrames().add(
                             new javafx.animation.KeyFrame(
                                 javafx.util.Duration.millis(i * 1000L),
                                 ev -> {
-                                    int remaining = 10 - sec;
+                                    int remaining = 5 - sec;
                                     if (remaining >= 0) {
                                         timerDisplay.setText(String.valueOf(remaining));
                                         
-                                        if (remaining > 0 && remaining <= 3) {
+                                        if (remaining > 0 && remaining <= 2) {
                                             timerDisplay.setStyle("-fx-text-fill: #DC2426; -fx-alignment: center; -fx-font-size: 40;");
                                         } else if (remaining == 0) {
                                             timerDisplay.setStyle("-fx-text-fill: #10B981; -fx-alignment: center; -fx-font-size: 36;");
@@ -2139,27 +2181,35 @@ public class MainApp extends Application {
                     }
                     
                     countdownTimeline.setOnFinished(ev -> {
-                        // Show success popup and close dialog when user clicks OK
-                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                        successAlert.setTitle("Deposit Successful");
-                        successAlert.setHeaderText(null);
-                        successAlert.setContentText(String.format("Successfully deposited ₱%.2f from %s", amount, source));
-                        successAlert.showAndWait();
-                        dialog.close();
-                        refreshMainScreen();
+                        // Enable button when countdown finishes
+                        returnNowBtn.setDisable(false);
+                        returnNowBtn.setText("Return Now");
+                        returnNowBtn.setStyle(
+                            "-fx-background-color: #FFD700; " +
+                            "-fx-text-fill: #1F2937; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-padding: 10 20; " +
+                            "-fx-border-radius: 8; " +
+                            "-fx-font-size: 12;"
+                        );
+                        // Auto-close after 1 more second if user doesn't click
+                        javafx.animation.Timeline autoClose = new javafx.animation.Timeline(
+                            new javafx.animation.KeyFrame(javafx.util.Duration.millis(1000), evt -> {
+                                javafx.application.Platform.runLater(() -> {
+                                    dialog.close();
+                                    refreshMainScreen();
+                                });
+                            })
+                        );
+                        autoClose.play();
                     });
                     
-                    // Button to return immediately
+                    // Button to return after countdown finishes
                     returnNowBtn.setOnAction(ev -> {
-                        countdownTimeline.stop();
-                        // Show success popup and close dialog when user clicks OK
-                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                        successAlert.setTitle("Deposit Successful");
-                        successAlert.setHeaderText(null);
-                        successAlert.setContentText(String.format("Successfully deposited ₱%.2f from %s", amount, source));
-                        successAlert.showAndWait();
-                        dialog.close();
-                        refreshMainScreen();
+                        javafx.application.Platform.runLater(() -> {
+                            dialog.close();
+                            refreshMainScreen();
+                        });
                     });
                     
                     countdownTimeline.setCycleCount(1);
@@ -2187,7 +2237,7 @@ public class MainApp extends Application {
         timeline.setCycleCount(1);
         timeline.play();
         
-        dialog.showAndWait();
+        dialog.show();
     }
     
     private void showWithdrawDialog() {
@@ -2467,7 +2517,15 @@ public class MainApp extends Application {
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    String merchant = merchantBox.getEditor().getText().trim();
+                    // Prefer the selected value from the ComboBox; fall back to editor text if user typed a new merchant
+                    String merchant = null;
+                    if (merchantBox.getValue() != null) {
+                        merchant = merchantBox.getValue().trim();
+                    } else if (merchantBox.getEditor() != null) {
+                        merchant = merchantBox.getEditor().getText().trim();
+                    }
+                    if (merchant == null) merchant = "";
+                    final String merchantFinal = merchant;
                     double amt = Double.parseDouble(amountField.getText().trim());
                     double fee = 15.0; // fixed online payment fee
                     double total = amt + fee;
@@ -2479,13 +2537,13 @@ public class MainApp extends Application {
                     confirm.setTitle("Confirm Payment");
                     confirm.setHeaderText("Pay merchant using " + paymentMethod);
                     confirm.setContentText(String.format("Payment Method: %s\n%s\nMerchant: %s\nAmount: ₱%.2f\nService Fee: ₱%.2f\nTotal: ₱%.2f\n\nProceed?", 
-                        paymentMethod, cardInfo, merchant, amt, fee, total));
+                        paymentMethod, cardInfo, merchantFinal, amt, fee, total));
                     confirm.showAndWait().ifPresent(cresp -> {
                         if (cresp == ButtonType.OK) {
-                            if (azureApp.payOnline(currentUser, merchant, amt)) {
+                            if (azureApp.payOnline(currentUser, merchantFinal, amt)) {
                                 showAlert("Success", 
                                     String.format("Payment successful!\nPaid ₱%.2f to %s using %s\nService Fee: ₱%.2f\nTotal Charged: ₱%.2f", 
-                                    amt, merchant, paymentMethod, fee, total), 
+                                    amt, merchantFinal, paymentMethod, fee, total), 
                                     Alert.AlertType.INFORMATION);
                                 refreshMainScreen();
                             } else {
@@ -4873,22 +4931,22 @@ public class MainApp extends Application {
         ButtonType okButton = new ButtonType("Close", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().add(okButton);
         
-        // Initialize card CVV if not already set (first time only)
+        // Get card CVV (now generated at registration for all new users)
         String cardCVV = user.getCardCVV();
         if (cardCVV == null || cardCVV.isBlank()) {
+            // Fallback for legacy users (backward compatibility)
             cardCVV = String.format("%03d", 100 + (int)(Math.random() * 900));
             user.setCardCVV(cardCVV);
+            azureApp.updateUser(user);
         }
         
-        // Initialize card expiry date if not already set (first time only)
+        // Get card expiry date (now generated at registration for all new users)
         String cardExpiryDate = user.getCardExpiryDate();
         if (cardExpiryDate == null || cardExpiryDate.isBlank()) {
-            if (expiryDate == null || expiryDate.isBlank()) {
-                cardExpiryDate = "11/30"; // Default expiry
-            } else {
-                cardExpiryDate = expiryDate;
-            }
+            // Fallback for legacy users (backward compatibility)
+            cardExpiryDate = "11/30";
             user.setCardExpiryDate(cardExpiryDate);
+            azureApp.updateUser(user);
         }
         
         // Create card details display

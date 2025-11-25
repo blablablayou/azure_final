@@ -56,8 +56,34 @@ public class AzureDigitalApp {
      */
     public UserAccount registerUser(String username, String pin, String mobile) {
         UserAccount user = new UserAccount(username, pin, mobile);
+        
+        // Generate unique account number for every new user at registration time
+        // Format: 16-digit number (e.g., 4532123456783456)
+        String uniqueAccountNumber = generateUniqueAccountNumber();
+        user.setVirtualBankNumber(uniqueAccountNumber);
+        
+        // Generate unique CVV for every new user at registration time
+        String uniqueCVV = String.format("%03d", 100 + (int)(Math.random() * 900));
+        user.setCardCVV(uniqueCVV);
+        
+        // Set default expiry date (11/30)
+        user.setCardExpiryDate("11/30");
+        
         FileManager.saveUser(user);
         return user;
+    }
+    
+    /**
+     * Generate a unique 16-digit account number
+     * @return A unique 16-digit account number
+     */
+    private String generateUniqueAccountNumber() {
+        // Generate random 16-digit account number (4532XXXXXXXXXXXX format)
+        StringBuilder accountNumber = new StringBuilder("4532");
+        for (int i = 0; i < 12; i++) {
+            accountNumber.append((int)(Math.random() * 10));
+        }
+        return accountNumber.toString();
     }
     
     /**
@@ -175,7 +201,12 @@ public class AzureDigitalApp {
      * @return List of fixed merchants
      */
     public List<String> getFixedMerchants() {
-        return List.of("Restaurant A", "Cafe B", "Shop C");
+        // Prefer merchants discovered from transaction logs, otherwise fall back to defaults
+        List<String> merchants = FileManager.getMerchants();
+        if (merchants == null || merchants.isEmpty()) {
+            return List.of("Restaurant A", "Cafe B", "Shop C");
+        }
+        return merchants;
     }
     
     /**

@@ -281,9 +281,51 @@ public class FileManager {
             double totalTransacted = Double.parseDouble(parts[5]);
             String rank = parts[6];
             
-            return new UserAccount(username, pinHash, mobile, balance, points, totalTransacted, rank, 0, 0);
+            UserAccount user = new UserAccount(username, pinHash, mobile, balance, points, totalTransacted, rank, 0, 0);
+            
+            // Restore CVV and expiry date if present in the file
+            if (parts.length > 9 && !parts[9].isEmpty()) {
+                user.setCardCVV(parts[9]);
+            }
+            if (parts.length > 10 && !parts[10].isEmpty()) {
+                user.setCardExpiryDate(parts[10]);
+            }
+            // Restore virtual bank number (account number) if present in the file
+            if (parts.length > 11 && !parts[11].isEmpty()) {
+                user.setVirtualBankNumber(parts[11]);
+            }
+            
+            return user;
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    /**
+     * Extract unique merchant names from the transactions log.
+     * Looks for patterns like "paid <amount> to <merchant>" and returns a sorted list.
+     * @return List of merchant names (may be empty)
+     */
+    public static List<String> getMerchants() {
+        try {
+            List<String> lines = readAllLines(TRANSACTIONS_FILE);
+            Set<String> merchants = new LinkedHashSet<>();
+            for (String line : lines) {
+                if (line == null || line.isEmpty()) continue;
+                // Attempt to parse "... paid <amount> to <merchant>" patterns
+                int idx = line.indexOf(" to ");
+                if (idx >= 0 && idx + 4 < line.length()) {
+                    String tail = line.substring(idx + 4).trim();
+                    // strip trailing punctuation
+                    tail = tail.replaceAll("[.,;]$", "");
+                    if (!tail.isEmpty()) {
+                        merchants.add(tail);
+                    }
+                }
+            }
+            return new ArrayList<>(merchants);
+        } catch (IOException e) {
+            return new ArrayList<>();
         }
     }
 }

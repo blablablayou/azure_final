@@ -196,6 +196,6 @@ public class UserAccount {
     }
 
     public String toFileFormat() {
-        return username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime;
+        return username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime + "," + (cardCVV != null ? cardCVV : "") + "," + (cardExpiryDate != null ? cardExpiryDate : "") + "," + (virtualBankNumber != null ? virtualBankNumber : "");
     }
 }
