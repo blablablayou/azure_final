@@ -1,0 +1,38 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< blablablayou:azure_final >----------------------
+[INFO] Building azure_final 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] 6 problems were encountered while building the effective model for org.openjfx:javafx-controls:jar:win:21.0.1 during dependency collection step for project (use -X to see details)
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ azure_final ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ azure_final ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 14 source files with javac [debug release 21] to target\classes
+[INFO] /c:/Users/Cess/OneDrive/Desktop/Azure_Final/src/azurewallet/main/MainApp.java: c:\Users\Cess\OneDrive\Desktop\Azure_Final\src\azurewallet\main\MainApp.java uses unchecked or unsafe operations.
+[INFO] /c:/Users/Cess/OneDrive/Desktop/Azure_Final/src/azurewallet/main/MainApp.java: Recompile with -Xlint:unchecked for details.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /c:/Users/Cess/OneDrive/Desktop/Azure_Final/src/azurewallet/main/MainApp.java:[2277,26] incomparable types: java.lang.Void and javafx.scene.control.ButtonType
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.040 s
+[INFO] Finished at: 2025-11-25T22:27:24+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project azure_final: Compilation failure
+[ERROR] /c:/Users/Cess/OneDrive/Desktop/Azure_Final/src/azurewallet/main/MainApp.java:[2277,26] incomparable types: java.lang.Void and javafx.scene.control.ButtonType
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
