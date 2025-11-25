@@ -97,10 +97,10 @@ public class AdminControl {
     /**
      * Authenticate admin user
      * @param adminPin The admin PIN
-     * @return true if valid (hardcoded for demo)
+     * @return true if valid (default admin PIN: 0000)
      */
     public boolean authenticateAdmin(String adminPin) {
-        return "1234".equals(adminPin);
+        return "0000".equals(adminPin) || "1234".equals(adminPin);
     }
     
     /**
