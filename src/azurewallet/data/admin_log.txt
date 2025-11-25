@@ -1,3 +1,9 @@
 2025-11-25T02:28:14.059778 - Cleared all admin activity logs via GUI.
 2025-11-25T02:28:16.588507 - Cleared all system revenue records via GUI.
 2025-11-25T02:28:18.913580 - Cleared all vouchers via GUI.
+2025-11-25 20:09:47 | DELETE_USER | cessmoto
+2025-11-25 20:09:47 | DELETE_USER | daiger
+2025-11-25 20:09:47 | DELETE_USER | cess
+2025-11-25 20:09:47 | DELETE_USER | wowi
+2025-11-25 20:09:47 | DELETE_USER | qwe
+2025-11-25 20:19:24 | DELETE_USER | qweqwe
