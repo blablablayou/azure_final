@@ -22,7 +22,3 @@
 2025-11-25T23:52:35.413821900 - kevin earned 50 points (Deposit via BPI (ref AZR-303026))
 2025-11-26T05:17:41.137392900 - qwe earned 2 points (Bills Payment to PLDT PHP 2,000.00)
 2025-11-26T07:20:26.256909500 - Jus earned 10 points (Deposit via PayMaya (ref AZR-756697))
-2025-11-26T11:26:36.191654400 - Justine earned 5 points (Deposit via BDO (ref AZR-171287))
-2025-11-26T11:29:46.682157600 - Justine redeemed 5 points (converted to PHP 5.00)
-2025-11-26T11:39:19.607987200 - Justine earned 5 points (Prepaid Load DITO PHP 5,000.00)
-2025-11-26T13:53:54.999274800 - Justine earned 10 points (Deposit via BDO (ref AZR-325660))

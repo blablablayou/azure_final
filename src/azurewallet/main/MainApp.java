@@ -685,7 +685,7 @@ public class MainApp extends Application {
         backRow.getChildren().addAll(hasAccount, loginLink);
         
         regContainer.getChildren().addAll(
-            headerBox, usernameBox, mobileBox, pinBox, registerBtn, backRow
+            headerBox, nameRow, usernameBox, mobileBox, pinBox, registerBtn, backRow
         );
         
         root.setCenter(regContainer);
@@ -800,8 +800,8 @@ public class MainApp extends Application {
 
         // Get user from backend
         UserAccount user = azureApp.getUser(currentUser);
-        Label title = new Label(user.getUsername());
-        title.setFont(Font.font("System", FontWeight.BOLD, 24));
+        Label title = new Label("Welcome back, " + user.getFirstName() + " " + user.getLastName() + "!");
+        title.setFont(Font.font("System", FontWeight.BOLD, 15));
         title.setStyle("-fx-text-fill: #000000;");
         
         Label accountNumber = new Label(user.getMobile());

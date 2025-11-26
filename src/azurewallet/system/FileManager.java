@@ -88,24 +88,26 @@ public class FileManager {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] p = line.split(",");
-                if (p.length >= 9) {
+                if (p.length >= 11) {
                     UserAccount acc = new UserAccount(
                         p[0], p[1], p[2],
-                        Double.parseDouble(p[3]),
-                        Integer.parseInt(p[4]),
+                        p[3],
+                        p[4],
                         Double.parseDouble(p[5]),
-                        p[6],
-                        Integer.parseInt(p[7]),
-                        Long.parseLong(p[8])
+                        Integer.parseInt(p[6]),
+                        Double.parseDouble(p[7]),
+                        p[8],
+                        Integer.parseInt(p[9]),
+                        Long.parseLong(p[10])
                     );
                     // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, loyaltyTier, transactionPin, virtualCardBalance
-                    if (p.length > 9) acc.setVirtualBankNumber(p[9].isEmpty() ? null : p[9]);
-                    if (p.length > 10) acc.setCardCVV(p[10].isEmpty() ? null : p[10]);
-                    if (p.length > 11) acc.setCardExpiryDate(p[11].isEmpty() ? null : p[11]);
-                    if (p.length > 12) acc.setLoyaltyTier(p[12].isEmpty() ? "Classic" : p[12]);
-                    if (p.length > 13) acc.setTransactionPin(p[13].isEmpty() ? null : p[13]);
-                    if (p.length > 14) acc.setVirtualCardBalance(Double.parseDouble(p[14]));
-                    users.put(p[0], acc);
+                    if (p.length > 11) acc.setVirtualBankNumber(p[11].isEmpty() ? null : p[11]);
+                    if (p.length > 12) acc.setCardCVV(p[12].isEmpty() ? null : p[12]);
+                    if (p.length > 13) acc.setCardExpiryDate(p[13].isEmpty() ? null : p[13]);
+                    if (p.length > 14) acc.setLoyaltyTier(p[14].isEmpty() ? "Classic" : p[14]);
+                    if (p.length > 15) acc.setTransactionPin(p[15].isEmpty() ? null : p[15]);
+                    if (p.length > 16) acc.setVirtualCardBalance(Double.parseDouble(p[16]));
+                    users.put(p[2], acc);
                 }
             }
         } catch (IOException e) {
