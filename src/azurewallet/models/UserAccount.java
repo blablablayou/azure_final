@@ -35,6 +35,7 @@ public class UserAccount {
         this.points = 0;
         this.totalTransacted = 0.0;
         this.rank = "Bronze";
+        this.loyaltyTier = "Classic";
         this.failedAttempts = 0;
         this.lockEndTime = 0;
     }
@@ -56,6 +57,21 @@ public class UserAccount {
         this.rank = rank;
         this.failedAttempts = failedAttempts;
         this.lockEndTime = lockEndTime;
+        // Set loyalty tier based on rank
+        switch (rank.toLowerCase()) {
+            case "silver":
+                this.loyaltyTier = "Premium";
+                break;
+            case "gold":
+                this.loyaltyTier = "Gold";
+                break;
+            case "platinum":
+                this.loyaltyTier = "Diamond";
+                break;
+            default:
+                this.loyaltyTier = "Classic";
+                break;
+        }
     }
 
     // Overload for backward compatibility (old constructor)
@@ -160,10 +176,19 @@ public class UserAccount {
     }
 
     public void updateRank() {
-        if (totalTransacted >= 200000 && totalTransacted < 500000) rank = "Silver";
-        else if (totalTransacted >= 500000 && totalTransacted < 1000000) rank = "Gold";
-        else if (totalTransacted >= 1000000) rank = "Platinum";
-        else rank = "Bronze";
+        if (totalTransacted >= 200000 && totalTransacted < 500000) {
+            rank = "Silver";
+            loyaltyTier = "Premium";
+        } else if (totalTransacted >= 500000 && totalTransacted < 1000000) {
+            rank = "Gold";
+            loyaltyTier = "Gold";
+        } else if (totalTransacted >= 1000000) {
+            rank = "Platinum";
+            loyaltyTier = "Diamond";
+        } else {
+            rank = "Bronze";
+            loyaltyTier = "Classic";
+        }
     }
 
     public double getDepositLimit() {

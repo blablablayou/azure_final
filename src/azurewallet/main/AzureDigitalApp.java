@@ -16,7 +16,7 @@ public class AzureDigitalApp {
     private final DecimalFormat df = new DecimalFormat("#,##0.00");
     private static final double WITHDRAW_FEE = 15.0;
     private static final String[] FIXED_MERCHANTS = {
-        "Shopee", "Lazada", "Shein", "Grab", "Zalora", "Tokopedia", "Blibli", "TikTok Shop"
+        "Shopee", "Lazada", "Shein", "Grab", "Zalora", "Tokopedia", "Blibli", "TikTok Shop", "Flipkart"
     };
 
     public AzureDigitalApp() {
@@ -165,6 +165,9 @@ public class AzureDigitalApp {
         if (amount > sender.getBalance()) return false;
         sender.withdraw(amount);
         receiver.deposit(amount);
+        // Update total transacted for both users (for rank/loyalty tier)
+        sender.addTotalTransacted(amount);
+        receiver.addTotalTransacted(amount);
         fileManager.logTransaction(fromUsername, "Send to " + toUsername, amount);
         fileManager.logTransaction(toUsername, "Receive from " + fromUsername, amount);
         // Award transfer points to sender: 1 point per ₱1000 sent
@@ -195,6 +198,8 @@ public class AzureDigitalApp {
         if (amount + fee > acc.getBalance()) return false;
         // Withdraw total (amount + fee)
         acc.withdraw(amount + fee);
+        // Update total transacted (for rank/loyalty tier)
+        acc.addTotalTransacted(amount);
         // Award online payment points: 1 point per ₱1000 spent (based on amount only, not fee)
         int pts = (int) (amount / 1000);
         if (pts > 0) {
@@ -219,6 +224,8 @@ public class AzureDigitalApp {
         if (amount + fee > virtualCardBalance) return false;
         // Deduct from Virtual Card only, not main wallet
         acc.setVirtualCardBalance(virtualCardBalance - (amount + fee));
+        // Update total transacted (for rank/loyalty tier)
+        acc.addTotalTransacted(amount);
         // Award online payment points: 1 point per ₱1000 spent (based on amount only, not fee)
         int pts = (int) (amount / 1000);
         if (pts > 0) {
@@ -267,6 +274,8 @@ public class AzureDigitalApp {
         if (amount <= 0 || amount + fee > acc.getBalance()) return false;
         // Withdraw total (amount + fee)
         acc.withdraw(amount + fee);
+        // Update total transacted (for rank/loyalty tier)
+        acc.addTotalTransacted(amount);
         // Award bills payment points: 1 point per ₱1000 paid (based on amount only)
         int pts = (int) (amount / 1000);
         if (pts > 0) {
@@ -290,6 +299,8 @@ public class AzureDigitalApp {
         if (amount + fee > acc.getBalance()) return false;
         // Withdraw total (amount + fee)
         acc.withdraw(amount + fee);
+        // Update total transacted (for rank/loyalty tier)
+        acc.addTotalTransacted(amount);
         // Award load purchase points: 1 point per ₱1000 purchased
         int pts = (int) (amount / 1000);
         if (pts > 0) {

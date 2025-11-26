@@ -800,6 +800,10 @@ public class MainApp extends Application {
 
         // Get user from backend
         UserAccount user = azureApp.getUser(currentUser);
+        if (user == null) {
+            showLoginScreen();
+            return new HBox(); // Return empty header if user is null
+        }
         Label title = new Label("Welcome back, " + user.getFirstName() + " " + user.getLastName() + "!");
         title.setFont(Font.font("System", FontWeight.BOLD, 15));
         title.setStyle("-fx-text-fill: #000000;");
@@ -1576,13 +1580,13 @@ public class MainApp extends Application {
             }
         }
         
-        // Create scrollable container with fixed height for 5 transactions visible
+        // Create scrollable container with fixed height for 6 transactions visible
         ScrollPane transScroll = new ScrollPane(transContent);
         transScroll.setFitToWidth(true);
         transScroll.setStyle("-fx-control-inner-background: white;");
-        transScroll.setPrefHeight(320); // Height for ~5 transactions
-        transScroll.setMinHeight(320);
-        transScroll.setMaxHeight(320);
+        transScroll.setPrefHeight(384); // Height for ~6 transactions
+        transScroll.setMinHeight(384);
+        transScroll.setMaxHeight(384);
         transScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         transScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         
@@ -2401,6 +2405,64 @@ public class MainApp extends Application {
 
         amountSection.getChildren().addAll(amountLabel, amountField, presetLabel, presetsGrid);
 
+        // Deposit Limit Info - Based on User Rank
+        // Bronze: 100k, Silver: 150k, Gold: 300k, Platinum: 500k
+        String userRank = user.getRank();
+        final double DEPOSIT_LIMIT;
+        switch (userRank.toLowerCase()) {
+            case "silver":
+                DEPOSIT_LIMIT = 150000.0;
+                break;
+            case "gold":
+                DEPOSIT_LIMIT = 300000.0;
+                break;
+            case "platinum":
+                DEPOSIT_LIMIT = 500000.0;
+                break;
+            case "bronze":
+            default:
+                DEPOSIT_LIMIT = 100000.0;
+                break;
+        }
+        
+        double currentBalance = user.getBalance();
+        double remainingDepositAmount = DEPOSIT_LIMIT - currentBalance;
+        
+        Label limitInfoLabel = new Label("Deposit Limit (" + userRank + ")");
+        limitInfoLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        limitInfoLabel.setStyle("-fx-text-fill: #1E293B;");
+        
+        HBox limitInfoBox = new HBox(20);
+        limitInfoBox.setPadding(new Insets(14));
+        limitInfoBox.setStyle(
+            "-fx-background-color: #EFF6FF; " +
+            "-fx-border-color: #BFDBFE; " +
+            "-fx-border-radius: 8; " +
+            "-fx-border-width: 1;"
+        );
+        
+        VBox limitBox = new VBox(4);
+        Label limitLabel = new Label("Deposit Limit:");
+        limitLabel.setFont(Font.font("System", 11));
+        limitLabel.setStyle("-fx-text-fill: #64748B;");
+        Label limitValue = new Label(String.format("₱%.2f", DEPOSIT_LIMIT));
+        limitValue.setFont(Font.font("System", FontWeight.BOLD, 14));
+        limitValue.setStyle("-fx-text-fill: #0369A1;");
+        limitBox.getChildren().addAll(limitLabel, limitValue);
+        
+        VBox remainingBox = new VBox(4);
+        Label remainingLabel = new Label("Remaining to Deposit:");
+        remainingLabel.setFont(Font.font("System", 11));
+        remainingLabel.setStyle("-fx-text-fill: #64748B;");
+        Label remainingValue = new Label(String.format("₱%.2f", Math.max(0, remainingDepositAmount)));
+        remainingValue.setFont(Font.font("System", FontWeight.BOLD, 14));
+        remainingValue.setStyle("-fx-text-fill: #0369A1;");
+        remainingBox.getChildren().addAll(remainingLabel, remainingValue);
+        
+        limitInfoBox.getChildren().addAll(limitBox, remainingBox);
+        HBox.setHgrow(limitBox, Priority.ALWAYS);
+        HBox.setHgrow(remainingBox, Priority.ALWAYS);
+
         // Info Box
         Label infoBox = new Label("Deposits are processed instantly and credited to your wallet");
         infoBox.setFont(Font.font("System", 11));
@@ -2430,7 +2492,7 @@ public class MainApp extends Application {
 
         confirmSection.getChildren().add(confirmBox);
 
-        mainContent.getChildren().addAll(headerBox, sourceSection, amountSection, infoBox, confirmSection);
+        mainContent.getChildren().addAll(headerBox, sourceSection, amountSection, limitInfoLabel, limitInfoBox, infoBox, confirmSection);
 
         dialog.getDialogPane().setContent(mainContent);
         dialog.setResizable(false);
@@ -2473,6 +2535,35 @@ public class MainApp extends Application {
                     
                     if (amt <= 0) {
                         showAlert("Error", "Please enter a valid amount.", Alert.AlertType.ERROR);
+                        return null;
+                    }
+                    
+                    // Check deposit limit based on user rank
+                    String userRankCheck = user.getRank();
+                    double depositLimitCheck;
+                    switch (userRankCheck.toLowerCase()) {
+                        case "silver":
+                            depositLimitCheck = 150000.0;
+                            break;
+                        case "gold":
+                            depositLimitCheck = 300000.0;
+                            break;
+                        case "platinum":
+                            depositLimitCheck = 500000.0;
+                            break;
+                        case "bronze":
+                        default:
+                            depositLimitCheck = 100000.0;
+                            break;
+                    }
+                    
+                    double currentBalanceCheck = user.getBalance();
+                    if (currentBalanceCheck + amt > depositLimitCheck) {
+                        double remainingAmount = depositLimitCheck - currentBalanceCheck;
+                        showAlert("Deposit Limit Exceeded", 
+                            String.format("Your deposit limit as a %s member is ₱%.2f.\nYou can only deposit up to ₱%.2f more.\nYour remaining deposit amount is: ₱%.2f", 
+                            userRankCheck, depositLimitCheck, remainingAmount, remainingAmount), 
+                            Alert.AlertType.WARNING);
                         return null;
                     }
 
@@ -2884,7 +2975,7 @@ public class MainApp extends Application {
         );
         confirmMsg.setWrapText(true);
         
-        content.getChildren().addAll(loadingBox, successBox, receiptBox, confirmMsg);
+        content.getChildren().addAll(overlayPane, receiptBox, confirmMsg);
         
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Done", ButtonBar.ButtonData.OK_DONE));
@@ -3445,11 +3536,11 @@ public class MainApp extends Application {
                 methodBtn.setSelected(true);
                 selectedMethodBtn = methodBtn;
                 methodBtn.setStyle(
-                    "-fx-background-color: #DBEAFE; " +
-                    "-fx-border-color: #3B82F6; " +
+                    "-fx-background-color: #FBBF24; " +
+                    "-fx-border-color: #F59E0B; " +
                     "-fx-border-radius: 8; " +
                     "-fx-border-width: 2; " +
-                    "-fx-text-fill: #1E40AF; " +
+                    "-fx-text-fill: #FFFFFF; " +
                     "-fx-font-weight: bold; " +
                     "-fx-cursor: hand;"
                 );
@@ -3460,11 +3551,11 @@ public class MainApp extends Application {
             methodBtn.selectedProperty().addListener((obs, oldV, newV) -> {
                 if (newV) {
                     btn.setStyle(
-                        "-fx-background-color: #DBEAFE; " +
-                        "-fx-border-color: #3B82F6; " +
+                        "-fx-background-color: #FBBF24; " +
+                        "-fx-border-color: #F59E0B; " +
                         "-fx-border-radius: 8; " +
                         "-fx-border-width: 2; " +
-                        "-fx-text-fill: #1E40AF; " +
+                        "-fx-text-fill: #FFFFFF; " +
                         "-fx-font-weight: bold; " +
                         "-fx-cursor: hand;"
                     );
@@ -3540,6 +3631,12 @@ public class MainApp extends Application {
             "-fx-text-fill: #1E293B;"
         );
         acctNumberField.setPrefHeight(45);
+        // Restrict to numbers only
+        acctNumberField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.matches("\\d*")) {
+                acctNumberField.setText(newVal.replaceAll("[^\\d]", ""));
+            }
+        });
 
         detailsSection.getChildren().addAll(nameLabel, acctNameField, numberLabel, acctNumberField);
 
@@ -3568,6 +3665,12 @@ public class MainApp extends Application {
             "-fx-text-fill: #1E293B;"
         );
         amountField.setPrefHeight(45);
+        // Restrict to numbers and decimal point only
+        amountField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.matches("\\d*(\\.\\d*)?")) {
+                amountField.setText(newVal.replaceAll("[^\\d.]", ""));
+            }
+        });
 
         Label feeInfo = new Label("⚠️ Withdrawal Fee: ₱15.00 (will be deducted from your balance)");
         feeInfo.setFont(Font.font("System", 11));
@@ -3766,7 +3869,7 @@ public class MainApp extends Application {
         successTitle.setFont(Font.font("System", FontWeight.BOLD, 20));
         successTitle.setStyle("-fx-text-fill: #10B981;");
         
-        Label successMsg = new Label("Your funds will arrive in 1-3 business days");
+        Label successMsg = new Label("Your withdrawal has been processed");
         successMsg.setFont(Font.font("System", 14));
         successMsg.setStyle("-fx-text-fill: #6B7280;");
         
@@ -3866,7 +3969,7 @@ public class MainApp extends Application {
         // Confirmation message (initially hidden)
         Label confirmMsg = new Label(
             "Your withdrawal has been processed successfully.\n" +
-            "Please allow 1-3 business days for the funds to arrive."
+            "Please allow 1-2 business days for the funds to arrive."
         );
         confirmMsg.setFont(Font.font("System", 12));
         confirmMsg.setStyle(
@@ -4258,18 +4361,18 @@ public class MainApp extends Application {
         balanceBox.setPadding(new Insets(12));
         balanceBox.setStyle(
             "-fx-background-color: #E0F2FE; " +
-            "-fx-border-color: #7DD3FC; " +
+            "-fx-border-color: #FCD34D; " +
             "-fx-border-radius: 8; " +
             "-fx-border-width: 1.5;"
         );
         
         Label balanceInfoLabel = new Label("Your Available Balance");
         balanceInfoLabel.setFont(Font.font("System", 11));
-        balanceInfoLabel.setStyle("-fx-text-fill: #0369A1;");
+        balanceInfoLabel.setStyle("-fx-text-fill: #000000;");
         
         Label balanceValue = new Label(String.format("₱%.2f", azureApp.getBalance(currentUser)));
         balanceValue.setFont(Font.font("System", FontWeight.BOLD, 18));
-        balanceValue.setStyle("-fx-text-fill: #0369A1;");
+        balanceValue.setStyle("-fx-text-fill: #000000;");
         
         balanceBox.getChildren().addAll(balanceInfoLabel, balanceValue);
         
@@ -4359,9 +4462,50 @@ public class MainApp extends Application {
         content.setAlignment(Pos.TOP_CENTER);
         content.setStyle("-fx-background-color: #FFFFFF;");
         
-        // Success icon and message
+        // Loading animation section (initially visible)
+        VBox loadingBox = new VBox(20);
+        loadingBox.setAlignment(Pos.CENTER);
+        loadingBox.setPrefHeight(150);
+        
+        // Rotating spinner animation
+        StackPane spinnerPane = new StackPane();
+        spinnerPane.setPrefSize(80, 80);
+        
+        Circle spinner = new Circle(40);
+        spinner.setFill(Color.TRANSPARENT);
+        spinner.setStroke(Color.web("#E0E7FF"));
+        spinner.setStrokeWidth(4);
+        spinner.setStrokeLineCap(StrokeLineCap.ROUND);
+        
+        Circle spinnerActive = new Circle(40);
+        spinnerActive.setFill(Color.TRANSPARENT);
+        spinnerActive.setStroke(Color.web("#10B981"));
+        spinnerActive.setStrokeWidth(4);
+        spinnerActive.setStrokeLineCap(StrokeLineCap.ROUND);
+        
+        // Create dash array for partial circle
+        spinnerActive.getStrokeDashArray().addAll(50.0, 150.0);
+        
+        // Rotation animation
+        RotateTransition rotateTransition = new RotateTransition(Duration.seconds(1), spinnerActive);
+        rotateTransition.setFromAngle(0);
+        rotateTransition.setToAngle(360);
+        rotateTransition.setCycleCount(Animation.INDEFINITE);
+        rotateTransition.play();
+        
+        spinnerPane.getChildren().addAll(spinner, spinnerActive);
+        
+        Label processingLabel = new Label("Processing Transfer...");
+        processingLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 14));
+        processingLabel.setStyle("-fx-text-fill: #10B981;");
+        
+        loadingBox.getChildren().addAll(spinnerPane, processingLabel);
+        
+        // Success icon and message (initially hidden with opacity 0)
         VBox successBox = new VBox(12);
         successBox.setAlignment(Pos.CENTER);
+        successBox.setPrefHeight(200);
+        successBox.setOpacity(0);
         
         Label checkmark = new Label("✓");
         checkmark.setFont(Font.font("System", FontWeight.BOLD, 64));
@@ -4379,6 +4523,13 @@ public class MainApp extends Application {
         successMsg.setStyle("-fx-text-fill: #6B7280;");
         
         successBox.getChildren().addAll(checkmark, successTitle, successMsg);
+        
+        // Create overlay stack pane with loading on top
+        StackPane overlayPane = new StackPane();
+        overlayPane.setPrefHeight(200);
+        overlayPane.getChildren().addAll(successBox, loadingBox);
+        StackPane.setAlignment(successBox, Pos.CENTER);
+        StackPane.setAlignment(loadingBox, Pos.CENTER);
         
         // Receipt Section
         VBox receiptBox = new VBox(14);
@@ -4427,6 +4578,21 @@ public class MainApp extends Application {
             timeRow
         );
         
+        // Fade out loading and fade in success after 2 seconds
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.seconds(2));
+        pause.setOnFinished(e -> {
+            rotateTransition.stop();
+            FadeTransition fadeOutLoading = new FadeTransition(Duration.millis(500), loadingBox);
+            fadeOutLoading.setToValue(0.0);
+            
+            FadeTransition fadeInSuccess = new FadeTransition(Duration.millis(500), successBox);
+            fadeInSuccess.setToValue(1.0);
+            
+            fadeOutLoading.play();
+            fadeInSuccess.play();
+        });
+        pause.play();
+        
         // Confirmation message
         Label confirmMsg = new Label(
             "The recipient has been notified about this transfer.\n" +
@@ -4443,7 +4609,7 @@ public class MainApp extends Application {
         );
         confirmMsg.setWrapText(true);
         
-        content.getChildren().addAll(successBox, receiptBox, confirmMsg);
+        content.getChildren().addAll(overlayPane, receiptBox, confirmMsg);
         
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Done", ButtonBar.ButtonData.OK_DONE));
@@ -4850,20 +5016,70 @@ public class MainApp extends Application {
         merchantLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
         merchantLabel.setStyle("-fx-text-fill: #1E293B;");
 
-        ComboBox<String> merchantBox = new ComboBox<>();
-        merchantBox.getItems().addAll(azureApp.getFixedMerchants());
-        merchantBox.setEditable(true);
-        merchantBox.setPromptText("Select or type merchant name");
-        merchantBox.setStyle(
-            "-fx-padding: 12; " +
-            "-fx-background-radius: 8; " +
-            "-fx-border-radius: 8; " +
-            "-fx-border-color: #E5E7EB; " +
-            "-fx-font-size: 12;"
-        );
-        merchantBox.setPrefHeight(40);
+        // Create 3x3 grid of merchant buttons
+        GridPane merchantGrid = new GridPane();
+        merchantGrid.setHgap(12);
+        merchantGrid.setVgap(12);
+        merchantGrid.setPrefWidth(400);
 
-        merchantSection.getChildren().addAll(merchantLabel, merchantBox);
+        ToggleGroup merchantGroup = new ToggleGroup();
+        String[] merchants = azureApp.getFixedMerchants();
+        
+        int index = 0;
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                if (index < merchants.length) {
+                    String merchant = merchants[index];
+                    ToggleButton merchantBtn = new ToggleButton(merchant);
+                    merchantBtn.setToggleGroup(merchantGroup);
+                    merchantBtn.setPrefWidth(120);
+                    merchantBtn.setPrefHeight(50);
+                    merchantBtn.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    
+                    // Default styling
+                    merchantBtn.setStyle(
+                        "-fx-background-color: #F1F5F9; " +
+                        "-fx-text-fill: #1E293B; " +
+                        "-fx-border-color: #E2E8F0; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-font-weight: bold;"
+                    );
+                    
+                    // Selected styling
+                    merchantBtn.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (newVal) {
+                            merchantBtn.setStyle(
+                                "-fx-background-color: #FFD700; " +
+                                "-fx-text-fill: #1E293B; " +
+                                "-fx-border-color: #FFA500; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-cursor: hand; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-border-width: 2;"
+                            );
+                        } else {
+                            merchantBtn.setStyle(
+                                "-fx-background-color: #F1F5F9; " +
+                                "-fx-text-fill: #1E293B; " +
+                                "-fx-border-color: #E2E8F0; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-cursor: hand; " +
+                                "-fx-font-weight: bold;"
+                            );
+                        }
+                    });
+                    
+                    merchantGrid.add(merchantBtn, col, row);
+                    index++;
+                }
+            }
+        }
+
+        merchantSection.getChildren().addAll(merchantLabel, merchantGrid);
 
         // Amount Section
         VBox amountSection = new VBox(12);
@@ -4978,7 +5194,13 @@ public class MainApp extends Application {
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    String merchant = merchantBox.getEditor().getText().trim();
+                    // Get selected merchant from toggle group
+                    Toggle selectedToggle = merchantGroup.getSelectedToggle();
+                    if (selectedToggle == null) {
+                        showAlert("Error", "Please select an e-commerce platform", Alert.AlertType.ERROR);
+                        return;
+                    }
+                    String merchant = ((ToggleButton) selectedToggle).getText();
                     double amt = Double.parseDouble(amountField.getText().trim());
                     double fee = 15.0;
                     double total = amt + fee;
@@ -5921,6 +6143,85 @@ public class MainApp extends Application {
         );
         infoBox.setWrapText(true);
 
+        // Loyalty Tier Rewards Section
+        VBox tierRewardsSection = new VBox(12);
+        tierRewardsSection.setPadding(new Insets(16));
+        tierRewardsSection.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1.5;"
+        );
+
+        Label tierRewardsLabel = new Label("🎁 Loyalty Tier Rewards");
+        tierRewardsLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        tierRewardsLabel.setStyle("-fx-text-fill: #1E293B;");
+
+        String currentTier = user != null ? user.getLoyaltyTier() : "Classic";
+        VBox tierDetailsBox = new VBox(10);
+
+        // Define tier rewards
+        String[][] tierRewards = {
+            {"Classic", "✓ 1 point per ₱1000 spent", "✗ Premium features locked"},
+            {"Premium", "✓ 1 point per ₱1000 spent", "✓ Double points on weekends", "✓ 5% bonus redemption"},
+            {"Gold", "✓ 1 point per ₱500 spent", "✓ Triple points on weekends", "✓ 10% bonus redemption", "✓ Free transfers"},
+            {"Diamond", "✓ 1 point per ₱250 spent", "✓ 4x points on weekends", "✓ 15% bonus redemption", "✓ Free transfers + bills", "✓ VIP support 24/7"}
+        };
+
+        String[] tierColors = {"#94A3B8", "#6366F1", "#F59E0B", "#EC4899"};
+        String[] tierNames = {"Classic", "Premium", "Gold", "Diamond"};
+
+        for (int t = 0; t < tierNames.length; t++) {
+            final int tierIndex = t;
+            boolean isCurrentTier = tierNames[t].equalsIgnoreCase(currentTier);
+            boolean isLockedTier = false;
+
+            // Check if tier is locked or unlocked
+            if (t == 1 && !currentTier.equals("Premium") && !currentTier.equals("Gold") && !currentTier.equals("Diamond")) {
+                isLockedTier = true;
+            } else if (t == 2 && !currentTier.equals("Gold") && !currentTier.equals("Diamond")) {
+                isLockedTier = true;
+            } else if (t == 3 && !currentTier.equals("Diamond")) {
+                isLockedTier = true;
+            }
+
+            HBox tierRow = new HBox(12);
+            tierRow.setPadding(new Insets(12));
+            tierRow.setStyle(
+                "-fx-background-color: " + (isCurrentTier ? "#F0F9FF" : "#FAFAFA") + "; " +
+                "-fx-border-color: " + (isCurrentTier ? tierColors[t] : "#E5E7EB") + "; " +
+                "-fx-border-radius: 8; " +
+                "-fx-border-width: " + (isCurrentTier ? "2" : "1") + ";"
+            );
+
+            Label tierBadge = new Label(isLockedTier ? "🔒" : "⭐");
+            tierBadge.setFont(Font.font("System", 16));
+            tierBadge.setStyle("-fx-text-fill: " + tierColors[t] + ";");
+
+            VBox tierInfo = new VBox(6);
+            Label tierName = new Label(tierNames[t] + (isCurrentTier ? " (Current)" : ""));
+            tierName.setFont(Font.font("System", FontWeight.BOLD, 12));
+            tierName.setStyle("-fx-text-fill: " + tierColors[t] + ";");
+
+            VBox rewardsList = new VBox(4);
+            for (String reward : tierRewards[t]) {
+                Label rewardLabel = new Label(reward);
+                rewardLabel.setFont(Font.font("System", 10));
+                if (isLockedTier) {
+                    rewardLabel.setStyle("-fx-text-fill: #CBD5E1;");
+                } else {
+                    rewardLabel.setStyle("-fx-text-fill: #475569;");
+                }
+                rewardsList.getChildren().add(rewardLabel);
+            }
+
+            tierInfo.getChildren().addAll(tierName, rewardsList);
+            tierRow.getChildren().addAll(tierBadge, tierInfo);
+            tierDetailsBox.getChildren().add(tierRow);
+        }
+
+        tierRewardsSection.getChildren().addAll(tierRewardsLabel, tierDetailsBox);
+
         // Confirmation box
         VBox confirmSection = new VBox(12);
         confirmSection.setPadding(new Insets(16));
@@ -5937,12 +6238,12 @@ public class MainApp extends Application {
 
         confirmSection.getChildren().add(confirmBox);
 
-        mainContent.getChildren().addAll(headerBox, pointsInfoSection, redeemSection, infoBox, confirmSection);
+        mainContent.getChildren().addAll(headerBox, pointsInfoSection, redeemSection, infoBox, tierRewardsSection, confirmSection);
 
         dialog.getDialogPane().setContent(mainContent);
         dialog.setResizable(false);
         dialog.getDialogPane().setPrefWidth(500);
-        dialog.getDialogPane().setPrefHeight(750);
+        dialog.getDialogPane().setPrefHeight(950);
 
         ButtonType redeemType = new ButtonType("Redeem", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -6247,20 +6548,70 @@ public class MainApp extends Application {
         billerLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
         billerLabel.setStyle("-fx-text-fill: #1E293B;");
 
-        ComboBox<String> billerBox = new ComboBox<>();
-        billerBox.getItems().addAll("Meralco", "Maynilad", "Manila Water", "PLDT", "Smart Billing", "Globe Billing");
-        billerBox.setEditable(true);
-        billerBox.setPromptText("Select or type biller name");
-        billerBox.setStyle(
-            "-fx-padding: 12; " +
-            "-fx-background-radius: 8; " +
-            "-fx-border-radius: 8; " +
-            "-fx-border-color: #E5E7EB; " +
-            "-fx-font-size: 12;"
-        );
-        billerBox.setPrefHeight(40);
+        // Create 3x2 grid of biller buttons
+        GridPane billerGrid = new GridPane();
+        billerGrid.setHgap(12);
+        billerGrid.setVgap(12);
+        billerGrid.setPrefWidth(400);
 
-        billerSection.getChildren().addAll(billerLabel, billerBox);
+        ToggleGroup billerGroup = new ToggleGroup();
+        String[] billers = {"Meralco", "Maynilad", "Maynilad", "PLDT", "Smart Billing", "Globe Billing"};
+        
+        int index = 0;
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 2; col++) {
+                if (index < billers.length) {
+                    String biller = billers[index];
+                    ToggleButton billerBtn = new ToggleButton(biller);
+                    billerBtn.setToggleGroup(billerGroup);
+                    billerBtn.setPrefWidth(180);
+                    billerBtn.setPrefHeight(50);
+                    billerBtn.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+                    
+                    // Default styling
+                    billerBtn.setStyle(
+                        "-fx-background-color: #F1F5F9; " +
+                        "-fx-text-fill: #1E293B; " +
+                        "-fx-border-color: #E2E8F0; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-font-weight: bold;"
+                    );
+                    
+                    // Selected styling
+                    billerBtn.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (newVal) {
+                            billerBtn.setStyle(
+                                "-fx-background-color: #FFD700; " +
+                                "-fx-text-fill: #1E293B; " +
+                                "-fx-border-color: #FFA500; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-cursor: hand; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-border-width: 2;"
+                            );
+                        } else {
+                            billerBtn.setStyle(
+                                "-fx-background-color: #F1F5F9; " +
+                                "-fx-text-fill: #1E293B; " +
+                                "-fx-border-color: #E2E8F0; " +
+                                "-fx-border-radius: 8; " +
+                                "-fx-background-radius: 8; " +
+                                "-fx-cursor: hand; " +
+                                "-fx-font-weight: bold;"
+                            );
+                        }
+                    });
+                    
+                    billerGrid.add(billerBtn, col, row);
+                    index++;
+                }
+            }
+        }
+
+        billerSection.getChildren().addAll(billerLabel, billerGrid);
 
         // Account Number Section
         VBox accountSection = new VBox(12);
@@ -6366,7 +6717,13 @@ public class MainApp extends Application {
         dialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    String biller = billerBox.getEditor().getText().trim();
+                    // Get selected biller from toggle group
+                    Toggle selectedToggle = billerGroup.getSelectedToggle();
+                    if (selectedToggle == null) {
+                        showAlert("Error", "Please select a biller", Alert.AlertType.ERROR);
+                        return;
+                    }
+                    String biller = ((ToggleButton) selectedToggle).getText();
                     String acct = acctField.getText().trim();
                     double amt = Double.parseDouble(amountField.getText().trim());
 
@@ -7410,6 +7767,10 @@ public class MainApp extends Application {
     // ==================== WALLET SCREEN ====================
     
     private void showWalletScreen() {
+        if (currentUser == null) {
+            showLoginScreen();
+            return;
+        }
         VBox mainContainer = new VBox();
         mainContainer.setStyle("-fx-background-color: #FFFFFF;");
         
@@ -7618,7 +7979,7 @@ public class MainApp extends Application {
         pointsLabel.setStyle("-fx-text-fill: #6B7280;");
         pointsLabelRow.getChildren().addAll(starIcon, pointsLabel);
         
-        Label pointsAmount = new Label(String.format("%,d points", user.getPoints()));
+        Label pointsAmount = new Label(String.format("%,d points", user != null ? user.getPoints() : 0));
         pointsAmount.setFont(Font.font("System", FontWeight.BOLD, 20));
         pointsAmount.setStyle("-fx-text-fill: #0F172A;");
         
@@ -7786,6 +8147,10 @@ public class MainApp extends Application {
     // ==================== HISTORY SCREEN ====================
     
     private void showHistoryScreen() {
+        if (currentUser == null) {
+            showLoginScreen();
+            return;
+        }
         VBox mainContainer = new VBox();
         mainContainer.setStyle("-fx-background-color: #F5F7FA;");
         
@@ -7913,6 +8278,10 @@ public class MainApp extends Application {
     // ==================== SETTINGS SCREEN ====================
     
     private void showSettingsScreen() {
+        if (currentUser == null) {
+            showLoginScreen();
+            return;
+        }
         VBox mainContainer = new VBox();
         mainContainer.setStyle("-fx-background-color: #F5F7FA;");
         
