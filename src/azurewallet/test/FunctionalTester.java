@@ -17,8 +17,8 @@ public class FunctionalTester {
             String mobile2 = "09" + (200000000 + new Random().nextInt(700000000));
 
             System.out.println("[TEST] Registering users: " + user1 + ", " + user2);
-            boolean r1 = app.registerUser(user1, "1234", mobile1);
-            boolean r2 = app.registerUser(user2, "1234", mobile2);
+            boolean r1 = app.registerUser("Test", "User1", user1, "1234", mobile1);
+            boolean r2 = app.registerUser("Test", "User2", user2, "1234", mobile2);
             System.out.println("  -> " + user1 + " registered: " + r1);
             System.out.println("  -> " + user2 + " registered: " + r2);
 

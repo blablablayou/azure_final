@@ -98,12 +98,13 @@ public class FileManager {
                         Integer.parseInt(p[7]),
                         Long.parseLong(p[8])
                     );
-                    // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, loyaltyTier, transactionPin
+                    // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, loyaltyTier, transactionPin, virtualCardBalance
                     if (p.length > 9) acc.setVirtualBankNumber(p[9].isEmpty() ? null : p[9]);
                     if (p.length > 10) acc.setCardCVV(p[10].isEmpty() ? null : p[10]);
                     if (p.length > 11) acc.setCardExpiryDate(p[11].isEmpty() ? null : p[11]);
                     if (p.length > 12) acc.setLoyaltyTier(p[12].isEmpty() ? "Classic" : p[12]);
                     if (p.length > 13) acc.setTransactionPin(p[13].isEmpty() ? null : p[13]);
+                    if (p.length > 14) acc.setVirtualCardBalance(Double.parseDouble(p[14]));
                     users.put(p[0], acc);
                 }
             }

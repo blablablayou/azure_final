@@ -16,7 +16,7 @@ public class AzureDigitalApp {
     private final DecimalFormat df = new DecimalFormat("#,##0.00");
     private static final double WITHDRAW_FEE = 15.0;
     private static final String[] FIXED_MERCHANTS = {
-        "Shopee", "Lazada", "Netflix", "Spotify", "Steam", "FoodPanda", "GrabFood"
+        "Shopee", "Lazada", "Shein", "Grab", "Zalora", "Tokopedia", "Blibli", "TikTok Shop"
     };
 
     public AzureDigitalApp() {
@@ -67,11 +67,11 @@ public class AzureDigitalApp {
         return ok;
     }
 
-    public boolean registerUser(String username, String pin, String mobile) {
+    public boolean registerUser(String firstName, String lastName, String username, String pin, String mobile) {
         if (users.containsKey(username)) return false;
         if (!mobile.matches("^09\\d{9}$")) return false;
         if (!pin.matches("\\d{4}")) return false;
-        UserAccount newUser = new UserAccount(username, pin, mobile);
+        UserAccount newUser = new UserAccount(firstName, lastName, username, pin, mobile);
         // Auto-generate a Luhn-valid virtual card number for new users
         String vbn = azurewallet.utils.CardUtil.generateLuhn16();
         newUser.setVirtualBankNumber(vbn);
@@ -148,6 +148,8 @@ public class AzureDigitalApp {
         double total = amount + 15.0; // withdraw fee
         if (total > u.getBalance()) return false;
         u.withdraw(total);
+        // Format: destination comes as "PayMaya - John Doe (09123456789)"
+        // Log as: "Withdraw to PayMaya - John Doe (09123456789)"
         String label = "Withdraw to " + (destination == null || destination.isBlank() ? "Azure Wallet" : destination);
         fileManager.logTransaction(username, label, amount);
         fileManager.logSystemRevenue(15.0);
@@ -206,6 +208,30 @@ public class AzureDigitalApp {
         return true;
     }
 
+    public boolean payOnlineWithVirtualCard(String username, String merchant, double amount) {
+        UserAccount acc = users.get(username);
+        if (acc == null) return false;
+        // Apply a fixed service fee for online payments
+        double fee = 15.0;
+        if (amount <= 0 || amount > acc.getSendLimit()) return false;
+        // Check Virtual Card balance instead of main wallet balance
+        double virtualCardBalance = acc.getVirtualCardBalance();
+        if (amount + fee > virtualCardBalance) return false;
+        // Deduct from Virtual Card only, not main wallet
+        acc.setVirtualCardBalance(virtualCardBalance - (amount + fee));
+        // Award online payment points: 1 point per ₱1000 spent (based on amount only, not fee)
+        int pts = (int) (amount / 1000);
+        if (pts > 0) {
+            acc.addPoints(pts);
+            fileManager.logPoints(username, "earned", pts, "Paid to " + merchant + " PHP " + df.format(amount));
+        }
+        // Log the payment and the service fee separately for clarity
+        fileManager.logTransaction(username, "Paid to " + merchant, amount);
+        fileManager.logTransaction(username, "Service Fee (Online Payment)", fee);
+        fileManager.saveUsers(users);
+        return true;
+    }
+
     public boolean redeemPoints(String username, int pts) {
         UserAccount acc = users.get(username);
         if (acc == null) return false;
@@ -241,8 +267,8 @@ public class AzureDigitalApp {
         if (amount <= 0 || amount + fee > acc.getBalance()) return false;
         // Withdraw total (amount + fee)
         acc.withdraw(amount + fee);
-        // Award bills payment points: 2 points per ₱1000 paid (based on amount only)
-        int pts = 2 * (int) (amount / 1000);
+        // Award bills payment points: 1 point per ₱1000 paid (based on amount only)
+        int pts = (int) (amount / 1000);
         if (pts > 0) {
             acc.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Bills Payment to " + biller + " PHP " + df.format(amount));
@@ -259,8 +285,8 @@ public class AzureDigitalApp {
         if (acc == null) return false;
         if (!number.matches("^09\\d{9}$")) return false;
         if (amount <= 0) return false;
-        // Apply a 1% service fee for load purchases
-        double fee = Math.round((amount * 0.01) * 100.0) / 100.0;
+        // Apply a 1.5% service fee for load purchases
+        double fee = Math.round((amount * 0.015) * 100.0) / 100.0;
         if (amount + fee > acc.getBalance()) return false;
         // Withdraw total (amount + fee)
         acc.withdraw(amount + fee);
@@ -352,6 +378,7 @@ public class AzureDigitalApp {
             return;
         }
         
+        // Use backward-compatible constructor with empty first/last names
         UserAccount newUser = new UserAccount(username, pin, mobile);
         users.put(username, newUser);
         fileManager.saveUsers(users);

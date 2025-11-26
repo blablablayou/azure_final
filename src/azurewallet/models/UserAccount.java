@@ -5,10 +5,13 @@ import azurewallet.system.FileManager;
 
 
 public class UserAccount {
+    private final String firstName;
+    private final String lastName;
     private final String username;
     private String pinHash;
     private final String mobile;
     private double balance;
+    private double virtualCardBalance = 0.0; // Separate balance for Virtual Card only
     private int points;
     private double totalTransacted;
     private String rank;
@@ -22,7 +25,9 @@ public class UserAccount {
     private String cardExpiryDate;
 
 
-    public UserAccount(String username, String pin, String mobile) {
+    public UserAccount(String firstName, String lastName, String username, String pin, String mobile) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.username = username;
         this.pinHash = HashUtil.hash(pin);
         this.mobile = mobile;
@@ -34,7 +39,14 @@ public class UserAccount {
         this.lockEndTime = 0;
     }
 
-    public UserAccount(String username, String pinHash, String mobile, double balance, int points, double totalTransacted, String rank, int failedAttempts, long lockEndTime) {
+    // Overload for backward compatibility (old constructor)
+    public UserAccount(String username, String pin, String mobile) {
+        this("", "", username, pin, mobile);
+    }
+
+    public UserAccount(String firstName, String lastName, String username, String pinHash, String mobile, double balance, int points, double totalTransacted, String rank, int failedAttempts, long lockEndTime) {
+        this.firstName = firstName;
+        this.lastName = lastName;
         this.username = username;
         this.pinHash = pinHash;
         this.mobile = mobile;
@@ -44,6 +56,11 @@ public class UserAccount {
         this.rank = rank;
         this.failedAttempts = failedAttempts;
         this.lockEndTime = lockEndTime;
+    }
+
+    // Overload for backward compatibility (old constructor)
+    public UserAccount(String username, String pinHash, String mobile, double balance, int points, double totalTransacted, String rank, int failedAttempts, long lockEndTime) {
+        this("", "", username, pinHash, mobile, balance, points, totalTransacted, rank, failedAttempts, lockEndTime);
     }
 
     /**
@@ -66,6 +83,8 @@ public class UserAccount {
         }
     }
     
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
     public void setTransactionPin(String pin) { this.transactionPin = pin; }
     public String getTransactionPin() { return transactionPin; }
     public void setLoyaltyTier(String tier) { this.loyaltyTier = tier; }
@@ -76,6 +95,8 @@ public class UserAccount {
     public String getCardCVV() { return cardCVV; }
     public void setCardExpiryDate(String expiryDate) { this.cardExpiryDate = expiryDate; }
     public String getCardExpiryDate() { return cardExpiryDate; }
+    public double getVirtualCardBalance() { return virtualCardBalance; }
+    public void setVirtualCardBalance(double amount) { this.virtualCardBalance = amount; }
     public String getUsername() { return username; }
     public String getMobile() { return mobile; }
     public double getBalance() { return balance; }
@@ -195,13 +216,13 @@ public class UserAccount {
     }
 
     public String toFileFormat() {
-        // Fields: username,pinHash,mobile,balance,points,totalTransacted,rank,failedAttempts,lockEndTime,virtualBankNumber,cardCVV,cardExpiryDate,loyaltyTier,transactionPin
+        // Fields: username,pinHash,mobile,balance,points,totalTransacted,rank,failedAttempts,lockEndTime,virtualBankNumber,cardCVV,cardExpiryDate,loyaltyTier,transactionPin,virtualCardBalance
         String vbn = (virtualBankNumber == null) ? "" : virtualBankNumber;
         String cvv = (cardCVV == null) ? "" : cardCVV;
         String expiry = (cardExpiryDate == null) ? "" : cardExpiryDate;
         String tier = (loyaltyTier == null) ? "Classic" : loyaltyTier;
         String tpin = (transactionPin == null) ? "" : transactionPin;
         return username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime
-            + "," + vbn + "," + cvv + "," + expiry + "," + tier + "," + tpin;
+            + "," + vbn + "," + cvv + "," + expiry + "," + tier + "," + tpin + "," + virtualCardBalance;
     }
 }
