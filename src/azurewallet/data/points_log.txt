@@ -26,4 +26,3 @@
 2025-11-26T16:03:17.946040300 - jims earned 1 points (Transfer PHP 1,000.00)
 2025-11-26T16:11:05.194293100 - jims earned 50 points (Deposit via GCash (ref AZR-558251))
 2025-11-26T16:16:58.345958900 - jims earned 5 points (Deposit via BDO (ref AZR-778718))
-2025-11-26T18:20:23.452301300 - qweqwe earned 1 points (Bills Payment to Globe Billing PHP 1,000.00)

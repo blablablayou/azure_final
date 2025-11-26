@@ -50,5 +50,6 @@
 2025-11-26T16:41:03.575455500 - jims: Receive from qweqwe - PHP 149,000.00
 2025-11-26T16:42:50.873118400 - jims: Receive from qweqwe - PHP 900.00
 2025-11-26T16:43:18.901574500 - jims: Receive from qweqwe - PHP 90.00
-2025-11-26T18:20:23.461312400 - qweqwe: Bills Payment to Globe Billing (Acct: 09942160815) - PHP 1,000.00
-2025-11-26T18:20:23.465390 - qweqwe: Service Fee (Bills) - PHP 20.00
+2025-11-26T20:33:14.426100900 - blablablayou: Top Up Azure Virtual Card via PayMaya - PHP 1,000.00
+2025-11-26T20:34:14.045842300 - blablablayou: Top Up Azure Virtual Card via BDO - PHP 2,000.00
+2025-11-26T20:40:01.057502600 - blablablayou: Top Up Azure Virtual Card via PayMaya - PHP 2,000.00

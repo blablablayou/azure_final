@@ -23,6 +23,8 @@ public class UserAccount {
     private String virtualBankNumber;
     private String cardCVV;
     private String cardExpiryDate;
+    private boolean balanceVisible = true;
+    private boolean virtualCardBalanceVisible = true;
 
 
     public UserAccount(String firstName, String lastName, String username, String pin, String mobile) {
@@ -121,6 +123,10 @@ public class UserAccount {
     public String getRank() { return rank; }
     public boolean isLocked() { return System.currentTimeMillis() < lockEndTime; }
     public long getLockEndTime() { return lockEndTime; }
+    public boolean isBalanceVisible() { return balanceVisible; }
+    public void setBalanceVisible(boolean visible) { this.balanceVisible = visible; }
+    public boolean isVirtualCardBalanceVisible() { return virtualCardBalanceVisible; }
+    public void setVirtualCardBalanceVisible(boolean visible) { this.virtualCardBalanceVisible = visible; }
 
     public boolean verifyPin(String input) {
         return this.pinHash.equals(HashUtil.hash(input));
@@ -240,14 +246,40 @@ public class UserAccount {
         fileManager.showUserVouchers(username);
     }
 
+    /**
+     * Get the points multiplier based on loyalty tier
+     * Classic: 1x, Premium: 2x, Gold: 3x, Diamond: 4x
+     */
+    public double getPointsMultiplier() {
+        return switch (loyaltyTier.toLowerCase()) {
+            case "premium" -> 2.0;
+            case "gold" -> 3.0;
+            case "diamond" -> 4.0;
+            default -> 1.0; // Classic
+        };
+    }
+
+    /**
+     * Get the bonus redemption percentage based on loyalty tier
+     * Classic: 0%, Premium: 5%, Gold: 10%, Diamond: 15%
+     */
+    public double getRedemptionBonusPercentage() {
+        return switch (loyaltyTier.toLowerCase()) {
+            case "premium" -> 0.05;  // 5%
+            case "gold" -> 0.10;     // 10%
+            case "diamond" -> 0.15;  // 15%
+            default -> 0.0;          // Classic - no bonus
+        };
+    }
+
     public String toFileFormat() {
-        // Fields: firstName,lastName,username,pinHash,mobile,balance,points,totalTransacted,rank,failedAttempts,lockEndTime,virtualBankNumber,cardCVV,cardExpiryDate,loyaltyTier,transactionPin,virtualCardBalance
+        // Fields: firstName,lastName,username,pinHash,mobile,balance,points,totalTransacted,rank,failedAttempts,lockEndTime,virtualBankNumber,cardCVV,cardExpiryDate,loyaltyTier,transactionPin,virtualCardBalance,balanceVisible,virtualCardBalanceVisible
         String vbn = (virtualBankNumber == null) ? "" : virtualBankNumber;
         String cvv = (cardCVV == null) ? "" : cardCVV;
         String expiry = (cardExpiryDate == null) ? "" : cardExpiryDate;
         String tier = (loyaltyTier == null) ? "Classic" : loyaltyTier;
         String tpin = (transactionPin == null) ? "" : transactionPin;
         return firstName + "," + lastName + "," + username + "," + pinHash + "," + mobile + "," + balance + "," + points + "," + totalTransacted + "," + rank + "," + failedAttempts + "," + lockEndTime
-            + "," + vbn + "," + cvv + "," + expiry + "," + tier + "," + tpin + "," + virtualCardBalance;
+            + "," + vbn + "," + cvv + "," + expiry + "," + tier + "," + tpin + "," + virtualCardBalance + "," + balanceVisible + "," + virtualCardBalanceVisible;
     }
 }

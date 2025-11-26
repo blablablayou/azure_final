@@ -100,7 +100,7 @@ public class FileManager {
                         Integer.parseInt(p[9]),
                         Long.parseLong(p[10])
                     );
-                    // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, transactionPin, virtualCardBalance
+                    // optional fields: virtualBankNumber, cardCVV, cardExpiryDate, transactionPin, virtualCardBalance, balanceVisible, virtualCardBalanceVisible
                     // Note: loyaltyTier is automatically synced with rank by the constructor, don't override it
                     if (p.length > 11) acc.setVirtualBankNumber(p[11].isEmpty() ? null : p[11]);
                     if (p.length > 12) acc.setCardCVV(p[12].isEmpty() ? null : p[12]);
@@ -108,6 +108,8 @@ public class FileManager {
                     // Skip loading loyaltyTier from file (p[14]) - let it be auto-synced by constructor
                     if (p.length > 15) acc.setTransactionPin(p[15].isEmpty() ? null : p[15]);
                     if (p.length > 16) acc.setVirtualCardBalance(Double.parseDouble(p[16]));
+                    if (p.length > 17) acc.setBalanceVisible(Boolean.parseBoolean(p[17]));
+                    if (p.length > 18) acc.setVirtualCardBalanceVisible(Boolean.parseBoolean(p[18]));
                     users.put(p[2], acc);
                 }
             }

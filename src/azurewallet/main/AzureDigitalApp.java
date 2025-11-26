@@ -23,7 +23,7 @@ public class AzureDigitalApp {
         fileManager = new FileManager();
         users = fileManager.loadUsers();
         scheduler = new BackgroundScheduler(fileManager, users);
-        scheduler.runScheduler();
+        // Don't auto-run scheduler - let admin start it manually
     }
 
     // Expose internals for GUI integration
@@ -37,6 +37,11 @@ public class AzureDigitalApp {
 
     public BackgroundScheduler getScheduler() {
         return scheduler;
+    }
+
+    // Start the scheduler (called by admin)
+    public void startScheduler() {
+        scheduler.runScheduler();
     }
 
     // Expose fixed merchants for GUI
@@ -96,8 +101,9 @@ public class AzureDigitalApp {
         if (u == null) return false;
         if (u.getBalance() + amount > u.getDepositLimit()) return false;
         u.deposit(amount);
-        // Award points: 1 point per ₱1000 deposited
-        int pts = (int) (amount / 1000);
+        // Award points: 1 point per ₱1000 deposited, multiplied by tier multiplier
+        int basePoints = (int) (amount / 1000);
+        int pts = (int) (basePoints * u.getPointsMultiplier());
         if (pts > 0) {
             u.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Deposit PHP " + df.format(amount));
@@ -114,8 +120,9 @@ public class AzureDigitalApp {
         if (u == null) return false;
         if (u.getBalance() + amount > u.getDepositLimit()) return false;
         u.deposit(amount);
-        // Award points: 1 point per ₱1000 deposited
-        int pts = (int) (amount / 1000);
+        // Award points: 1 point per ₱1000 deposited, multiplied by tier multiplier
+        int basePoints = (int) (amount / 1000);
+        int pts = (int) (basePoints * u.getPointsMultiplier());
         if (pts > 0) {
             u.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Deposit via " + (source == null ? "Unknown" : source));
@@ -170,8 +177,9 @@ public class AzureDigitalApp {
         receiver.addTotalTransacted(amount);
         fileManager.logTransaction(fromUsername, "Send to " + toUsername, amount);
         fileManager.logTransaction(toUsername, "Receive from " + fromUsername, amount);
-        // Award transfer points to sender: 1 point per ₱1000 sent
-        int pts = (int) (amount / 1000);
+        // Award transfer points to sender: 1 point per ₱1000 sent, multiplied by tier multiplier
+        int basePts = (int) (amount / 1000);
+        int pts = (int) (basePts * sender.getPointsMultiplier());
         if (pts > 0) {
             sender.addPoints(pts);
             fileManager.logPoints(fromUsername, "earned", pts, "Transfer PHP " + df.format(amount));
@@ -200,8 +208,9 @@ public class AzureDigitalApp {
         acc.withdraw(amount + fee);
         // Update total transacted (for rank/loyalty tier)
         acc.addTotalTransacted(amount);
-        // Award online payment points: 1 point per ₱1000 spent (based on amount only, not fee)
-        int pts = (int) (amount / 1000);
+        // Award online payment points: 1 point per ₱1000 spent, multiplied by tier multiplier
+        int basePts = (int) (amount / 1000);
+        int pts = (int) (basePts * acc.getPointsMultiplier());
         if (pts > 0) {
             acc.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Paid to " + merchant + " PHP " + df.format(amount));
@@ -226,8 +235,9 @@ public class AzureDigitalApp {
         acc.setVirtualCardBalance(virtualCardBalance - (amount + fee));
         // Update total transacted (for rank/loyalty tier)
         acc.addTotalTransacted(amount);
-        // Award online payment points: 1 point per ₱1000 spent (based on amount only, not fee)
-        int pts = (int) (amount / 1000);
+        // Award online payment points: 1 point per ₱1000 spent, multiplied by tier multiplier
+        int basePts = (int) (amount / 1000);
+        int pts = (int) (basePts * acc.getPointsMultiplier());
         if (pts > 0) {
             acc.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Paid to " + merchant + " PHP " + df.format(amount));
@@ -243,10 +253,16 @@ public class AzureDigitalApp {
         UserAccount acc = users.get(username);
         if (acc == null) return false;
         if (pts <= 0 || pts > acc.getPoints()) return false;
-        // Simple 1 point = 1 PHP conversion (1 point -> ₱1)
-        double value = pts * 1.0;
-        acc.redeemPoints(pts, value);
-        fileManager.logPoints(username, "redeemed", pts, "converted to PHP " + df.format(value));
+        // 1 point = 1 PHP conversion, plus tier-based bonus
+        double baseValue = pts * 1.0;
+        double bonusPercentage = acc.getRedemptionBonusPercentage();
+        double bonusValue = baseValue * bonusPercentage;
+        double totalValue = baseValue + bonusValue;
+        acc.redeemPoints(pts, totalValue);
+        String redeemNote = bonusPercentage > 0 ? 
+            String.format("converted to PHP %.2f (%.0f%% bonus = PHP %.2f)", totalValue, bonusPercentage * 100, bonusValue) :
+            String.format("converted to PHP %.2f", totalValue);
+        fileManager.logPoints(username, "redeemed", pts, redeemNote);
         fileManager.saveUsers(users);
         return true;
     }
@@ -276,8 +292,9 @@ public class AzureDigitalApp {
         acc.withdraw(amount + fee);
         // Update total transacted (for rank/loyalty tier)
         acc.addTotalTransacted(amount);
-        // Award bills payment points: 1 point per ₱1000 paid (based on amount only)
-        int pts = (int) (amount / 1000);
+        // Award bills payment points: 1 point per ₱1000 paid, multiplied by tier multiplier
+        int basePts = (int) (amount / 1000);
+        int pts = (int) (basePts * acc.getPointsMultiplier());
         if (pts > 0) {
             acc.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Bills Payment to " + biller + " PHP " + df.format(amount));
@@ -301,8 +318,9 @@ public class AzureDigitalApp {
         acc.withdraw(amount + fee);
         // Update total transacted (for rank/loyalty tier)
         acc.addTotalTransacted(amount);
-        // Award load purchase points: 1 point per ₱1000 purchased
-        int pts = (int) (amount / 1000);
+        // Award load purchase points: 1 point per ₱1000 purchased, multiplied by tier multiplier
+        int basePts = (int) (amount / 1000);
+        int pts = (int) (basePts * acc.getPointsMultiplier());
         if (pts > 0) {
             acc.addPoints(pts);
             fileManager.logPoints(username, "earned", pts, "Prepaid Load " + network + " PHP " + df.format(amount));

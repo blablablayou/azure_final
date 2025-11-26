@@ -95,11 +95,11 @@ public class MainApp extends Application {
     // ==================== LOGIN SCREEN ====================
     private void showLoginScreen() {
         // container for login screen
-        VBox loginContainer = new VBox(20);
+        VBox loginContainer = new VBox(28);
         // place content towards top so the app title sits higher in window
         loginContainer.setAlignment(Pos.TOP_CENTER);
         // larger top padding to push the title further upward from center
-        loginContainer.setPadding(new Insets(200, 0, 12, 0));
+        loginContainer.setPadding(new Insets(350, 30, 30, 30));
         loginContainer.getStyleClass().add("login-container");
 
         // Account dropdown (Logout only)
@@ -117,42 +117,35 @@ public class MainApp extends Application {
             accountMenu.getItems().addAll(logoutItem);
         
             // Welcome title and login form
-            VBox welcomeBox = new VBox(6);
+            VBox welcomeBox = new VBox(10);
             welcomeBox.setAlignment(Pos.CENTER);
+            welcomeBox.setPadding(new Insets(0, 0, 20, 0));
             Label titleLabel = new Label("");
-            titleLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
+            titleLabel.setFont(Font.font("System", FontWeight.BOLD, 32));
             titleLabel.setStyle("-fx-text-fill: #111827;");
             Label subtitle = new Label("Sign in to continue");
-            subtitle.setFont(Font.font("System", 12));
-            subtitle.setStyle("-fx-text-fill: #475569;");
+            subtitle.setFont(Font.font("System", 14));
+            subtitle.setStyle("-fx-text-fill: #64748B;");
             welcomeBox.getChildren().addAll(titleLabel, subtitle);
 
             // Form wrapper with username and PIN inputs
-            VBox formWrapper = new VBox(12);
+            VBox formWrapper = new VBox(16);
             formWrapper.setAlignment(Pos.CENTER);
+            formWrapper.setPadding(new Insets(0, 0, 12, 0));
             TextField usernameField = new TextField();
             usernameField.setPromptText("Username/PhoneNumber");
+            usernameField.setPrefHeight(48);
             styleInputField(usernameField);
             PasswordField pinField = new PasswordField();
             pinField.setPromptText("PIN");
+            pinField.setPrefHeight(48);
             styleInputField(pinField);
             Button signInBtn = createPrimaryButton("Sign In");
-            // remove the blue outline/border and ensure a flat rounded blue button
-            signInBtn.setStyle(
-                "-fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
-            );
-            // Override hover handlers (createPrimaryButton registers its own) to keep border transparent
-            signInBtn.setOnMouseEntered(e ->
-                signInBtn.setStyle(
-                    "-fx-background-color: #FFA500; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
-                )
-            );
-            signInBtn.setOnMouseExited(e ->
-                signInBtn.setStyle(
-                    "-fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
-                )
-            );
             signInBtn.setOnAction(e -> handleLogin(usernameField, pinField));
+            signInBtn.setPrefHeight(52);
+            signInBtn.setStyle(
+                "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #FFD700; -fx-text-fill: white; -fx-background-radius: 8; -fx-border-color: transparent; -fx-cursor: hand;"
+            );
             // Add Enter key functionality
             usernameField.setOnKeyPressed(e -> {
                 if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
@@ -166,29 +159,29 @@ public class MainApp extends Application {
             });
             formWrapper.getChildren().addAll(usernameField, pinField, signInBtn);
         
-        HBox signUpRow = new HBox(5);
+        HBox signUpRow = new HBox(6);
         signUpRow.setAlignment(Pos.CENTER);
         Label noAccount = new Label("Don't have an account?");
-        noAccount.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
+        noAccount.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14;");
         Hyperlink signUpLink = new Hyperlink("Sign Up");
-        signUpLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
+        signUpLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-underline: false;");
         signUpLink.setOnAction(e -> showRegistrationScreen());
         signUpRow.getChildren().addAll(noAccount, signUpLink);
         
-        HBox forgotRow = new HBox(5);
+        HBox forgotRow = new HBox(6);
         forgotRow.setAlignment(Pos.CENTER);
         Label forgotLabel = new Label("Forgot your PIN?");
-        forgotLabel.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
+        forgotLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14;");
         Hyperlink forgotLink = new Hyperlink("Click here");
-        forgotLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
+        forgotLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-underline: false;");
         forgotLink.setOnAction(e -> showForgotPinDialog());
         forgotRow.getChildren().addAll(forgotLabel, forgotLink);
         
         Button adminBtn = new Button("Admin Login");
         adminBtn.setStyle(
-            "-fx-background-color: transparent; -fx-text-fill: #333333; " +
-            "-fx-font-size: 12; -fx-border-color: #E2E8F0; -fx-border-width: 1; " +
-            "-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 6 12; -fx-cursor: hand;"
+            "-fx-background-color: transparent; -fx-text-fill: #64748B; " +
+            "-fx-font-size: 13; -fx-border-color: #E2E8F0; -fx-border-width: 1; " +
+            "-fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 8 16; -fx-cursor: hand;"
         );
         adminBtn.setOnAction(e -> showAdminLoginScreen());
         // hide the admin button from the UI but keep it functional via accelerator
@@ -197,8 +190,8 @@ public class MainApp extends Application {
         
         HBox bottomRow = new HBox(12);
         bottomRow.setAlignment(Pos.CENTER);
-        bottomRow.setPadding(new Insets(-10, 0, 0, 0));
-        VBox linkBox = new VBox(8);
+        bottomRow.setPadding(new Insets(20, 0, 0, 0));
+        VBox linkBox = new VBox(12);
         linkBox.setAlignment(Pos.CENTER);
         linkBox.getChildren().addAll(signUpRow, forgotRow);
         bottomRow.getChildren().addAll(linkBox, adminBtn);
@@ -244,7 +237,7 @@ public class MainApp extends Application {
         // Position logo as overlay on top without affecting layout
         VBox logoOverlay = new VBox(logoImageView);
         logoOverlay.setAlignment(Pos.TOP_CENTER);
-        logoOverlay.setPadding(new Insets(20, 0, 30, 0));
+        logoOverlay.setPadding(new Insets(40, 0, 40, 0));
         logoOverlay.setMouseTransparent(true);
         logoOverlay.setPickOnBounds(false);
 
@@ -544,83 +537,117 @@ public class MainApp extends Application {
     // ==================== REGISTRATION SCREEN ====================
     
     private void showRegistrationScreen() {
-        VBox regContainer = new VBox(25);
-        regContainer.setAlignment(Pos.CENTER);
-        regContainer.setPadding(new Insets(60, 40, 60, 40));
+        VBox regContainer = new VBox(32);
+        regContainer.setAlignment(Pos.TOP_CENTER);
+        regContainer.setPadding(new Insets(60, 30, 60, 30));
         regContainer.setStyle("-fx-background-color: #FFFFFF;");
         
         // Header
-        VBox headerBox = new VBox(8);
-        headerBox.setAlignment(Pos.CENTER_LEFT);
+        VBox headerBox = new VBox(12);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(0, 0, 28, 0));
         
         Label title = new Label("Create Account");
-        title.setFont(Font.font("System", FontWeight.BOLD, 28));
-        title.setStyle("-fx-text-fill: #000000;");
+        title.setFont(Font.font("System", FontWeight.BOLD, 32));
+        title.setStyle("-fx-text-fill: #111827;");
         
         Label subtitle = new Label("Join Azure Digital Wallet");
-        subtitle.setFont(Font.font("System", 9));
-        subtitle.setStyle("-fx-text-fill: #333333;");
+        subtitle.setFont(Font.font("System", 14));
+        subtitle.setStyle("-fx-text-fill: #64748B;");
         
         headerBox.getChildren().addAll(title, subtitle);
         
         // First Name and Last Name fields in 2-column layout
-        HBox nameRow = new HBox(12);
+        HBox nameRow = new HBox(16);
         nameRow.setPrefWidth(Double.MAX_VALUE);
         
-        VBox firstNameBox = new VBox(8);
+        VBox firstNameBox = new VBox(10);
         HBox.setHgrow(firstNameBox, Priority.ALWAYS);
         Label firstNameLabel = new Label("First Name");
-        firstNameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
-        firstNameLabel.setStyle("-fx-text-fill: #000000;");
+        firstNameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        firstNameLabel.setStyle("-fx-text-fill: #1E293B;");
         TextField firstNameField = new TextField();
         firstNameField.setPromptText("Enter first name");
+        firstNameField.setPrefHeight(48);
         styleInputField(firstNameField);
         firstNameBox.getChildren().addAll(firstNameLabel, firstNameField);
         
-        VBox lastNameBox = new VBox(8);
+        VBox lastNameBox = new VBox(10);
         HBox.setHgrow(lastNameBox, Priority.ALWAYS);
         Label lastNameLabel = new Label("Last Name");
-        lastNameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
-        lastNameLabel.setStyle("-fx-text-fill: #000000;");
+        lastNameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        lastNameLabel.setStyle("-fx-text-fill: #1E293B;");
         TextField lastNameField = new TextField();
         lastNameField.setPromptText("Enter last name");
+        lastNameField.setPrefHeight(48);
         styleInputField(lastNameField);
         lastNameBox.getChildren().addAll(lastNameLabel, lastNameField);
         
         nameRow.getChildren().addAll(firstNameBox, lastNameBox);
         
         // Username field
-        VBox usernameBox = new VBox(8);
+        VBox usernameBox = new VBox(10);
         Label usernameLabel = new Label("Username");
-        usernameLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
-        usernameLabel.setStyle("-fx-text-fill: #000000;");
+        usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        usernameLabel.setStyle("-fx-text-fill: #1E293B;");
         TextField usernameField = new TextField();
         usernameField.setPromptText("Choose a username");
+        usernameField.setPrefHeight(48);
         styleInputField(usernameField);
         usernameBox.getChildren().addAll(usernameLabel, usernameField);
         
         // Mobile field
-        VBox mobileBox = new VBox(8);
+        VBox mobileBox = new VBox(10);
         Label mobileLabel = new Label("Mobile Number");
-        mobileLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
-        mobileLabel.setStyle("-fx-text-fill: #000000;");
+        mobileLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        mobileLabel.setStyle("-fx-text-fill: #1E293B;");
         TextField mobileField = new TextField();
         mobileField.setPromptText("09XXXXXXXXX (11 digits)");
+        mobileField.setPrefHeight(48);
         styleInputField(mobileField);
         mobileBox.getChildren().addAll(mobileLabel, mobileField);
         
         // PIN field
-        VBox pinBox = new VBox(8);
+        VBox pinBox = new VBox(10);
         Label pinLabel = new Label("4-Digit PIN");
-        pinLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
-        pinLabel.setStyle("-fx-text-fill: #000000;");
+        pinLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        pinLabel.setStyle("-fx-text-fill: #1E293B;");
         PasswordField pinField = new PasswordField();
         pinField.setPromptText("Create 4-digit PIN");
+        pinField.setPrefHeight(48);
         styleInputField(pinField);
         pinBox.getChildren().addAll(pinLabel, pinField);
         
         // Register button
         Button registerBtn = createPrimaryButton("Create Account");
+        registerBtn.setPrefHeight(52);
+        registerBtn.setStyle(
+            "-fx-font-size: 16; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: #FFD700; " +
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 8; " +
+            "-fx-cursor: hand; " +
+            "-fx-border-color: transparent;"
+        );
+        registerBtn.setOnMouseEntered(e -> registerBtn.setStyle(
+            "-fx-font-size: 16; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: #FFA500; " +
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 8; " +
+            "-fx-cursor: hand; " +
+            "-fx-border-color: transparent;"
+        ));
+        registerBtn.setOnMouseExited(e -> registerBtn.setStyle(
+            "-fx-font-size: 16; " +
+            "-fx-font-weight: bold; " +
+            "-fx-background-color: #FFD700; " +
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 8; " +
+            "-fx-cursor: hand; " +
+            "-fx-border-color: transparent;"
+        ));
         registerBtn.setOnAction(e -> handleRegistration(firstNameField, lastNameField, usernameField, mobileField, pinField));
         // Add Enter key functionality
         firstNameField.setOnKeyPressed(e -> {
@@ -648,39 +675,15 @@ public class MainApp extends Application {
                 handleRegistration(firstNameField, lastNameField, usernameField, mobileField, pinField);
             }
         });
-        // Remove blue border for Register button, keep blue background
-        registerBtn.setStyle(
-            "-fx-background-color: #FFD700; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-background-radius: 12; " +
-            "-fx-cursor: hand;"
-        );
-        registerBtn.setOnMouseEntered(e -> registerBtn.setStyle(
-            "-fx-background-color: #FFA500; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-background-radius: 12; " +
-            "-fx-cursor: hand;"
-        ));
-        registerBtn.setOnMouseExited(e -> registerBtn.setStyle(
-            "-fx-background-color: #FFD700; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-background-radius: 12; " +
-            "-fx-cursor: hand;"
-        ));
         
         // Back to login
-        HBox backRow = new HBox(5);
+        HBox backRow = new HBox(6);
         backRow.setAlignment(Pos.CENTER);
+        backRow.setPadding(new Insets(16, 0, 0, 0));
         Label hasAccount = new Label("Already have an account?");
-        hasAccount.setStyle("-fx-text-fill: #333333; -fx-font-size: 13;");
+        hasAccount.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14;");
         Hyperlink loginLink = new Hyperlink("Sign In");
-        loginLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
+        loginLink.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-underline: false;");
         loginLink.setOnAction(e -> showLoginScreen());
         backRow.getChildren().addAll(hasAccount, loginLink);
         
@@ -825,8 +828,8 @@ public class MainApp extends Application {
     }
     
     private VBox createBalanceCard() {
-        VBox card = new VBox(15);
-        card.setPadding(new Insets(20));
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(15));
         card.setPrefHeight(220);
         // Add blue gradient background with border and shadow
         card.setStyle(
@@ -840,29 +843,95 @@ public class MainApp extends Application {
         
         UserAccount user = azureApp.getUser(currentUser);
         
+        // Top row with tier badge
+        HBox topRow = new HBox(15);
+        topRow.setAlignment(Pos.CENTER_LEFT);
+        
         // Tier badge
         Label tierLabel = new Label(user.getLoyaltyTier() + " Account");
         tierLabel.setFont(Font.font("System", 12));
         tierLabel.getStyleClass().add("tier-pill");
         
-        // Brand
+        topRow.getChildren().addAll(tierLabel);
+        
+        // Brand row
+        HBox brandRow = new HBox(15);
+        brandRow.setAlignment(Pos.CENTER_LEFT);
+        
         Label brandLabel = new Label("Azure Wallet ✦");
         brandLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
         brandLabel.getStyleClass().add("brand-label");
         
+        brandRow.getChildren().addAll(brandLabel);
+        
         Region cardSpacer = new Region();
         VBox.setVgrow(cardSpacer, Priority.ALWAYS);
         
-        // Balance display
+        // Balance display with hide/show toggle
         Label balanceTitle = new Label("Available Balance");
         balanceTitle.setFont(Font.font("System", 12));
         balanceTitle.getStyleClass().add("balance-title");
         
-        Label balanceAmount = new Label(String.format("₱ %.2f", azureApp.getBalance(currentUser)));
+        // Get the user's balance preference
+        UserAccount currentUserAccount = azureApp.getUser(currentUser);
+        boolean isBalanceVisible = (currentUserAccount != null) ? currentUserAccount.isBalanceVisible() : true;
+        
+        Label balanceAmount = new Label(isBalanceVisible ? String.format("₱ %.2f", azureApp.getBalance(currentUser)) : "••••••••");
         balanceAmount.setFont(Font.font("System", FontWeight.BOLD, 32));
         balanceAmount.getStyleClass().add("balance-amount");
         
-        card.getChildren().addAll(tierLabel, brandLabel, cardSpacer, balanceTitle, balanceAmount);
+        // Hide/Show button
+        final boolean[] balanceVisible = new boolean[] { isBalanceVisible };
+        Button toggleBalanceBtn = new Button(isBalanceVisible ? "👁" : "👁‍🗨");
+        toggleBalanceBtn.setFont(Font.font("System", 16));
+        toggleBalanceBtn.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0.2); " +
+            "-fx-text-fill: white; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        );
+        toggleBalanceBtn.setOnMouseEntered(e -> toggleBalanceBtn.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0.3); " +
+            "-fx-text-fill: white; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        ));
+        toggleBalanceBtn.setOnMouseExited(e -> toggleBalanceBtn.setStyle(
+            "-fx-background-color: rgba(255, 255, 255, 0.2); " +
+            "-fx-text-fill: white; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        ));
+        
+        toggleBalanceBtn.setOnAction(event -> {
+            balanceVisible[0] = !balanceVisible[0];
+            if (balanceVisible[0]) {
+                balanceAmount.setText(String.format("₱ %.2f", azureApp.getBalance(currentUser)));
+                toggleBalanceBtn.setText("👁");
+            } else {
+                balanceAmount.setText("••••••••");
+                toggleBalanceBtn.setText("👁‍🗨");
+            }
+            // Save preference to user account
+            UserAccount balanceUser = azureApp.getUser(currentUser);
+            if (balanceUser != null) {
+                balanceUser.setBalanceVisible(balanceVisible[0]);
+                azureApp.getFileManager().saveUsers(azureApp.getUsers());
+            }
+        });
+        
+        // Balance row with toggle button
+        HBox balanceRow = new HBox(12);
+        balanceRow.setAlignment(Pos.CENTER_LEFT);
+        balanceRow.getChildren().addAll(balanceAmount, toggleBalanceBtn);
+        
+        card.getChildren().addAll(topRow, brandRow, cardSpacer, balanceTitle, balanceRow);
         return card;
     }
     
@@ -889,10 +958,11 @@ public class MainApp extends Application {
         VBox pointsBtn = createActionButton(buildIcon("points"), "Points", e -> showRedeemPointsDialog());
         VBox billsBtn = createActionButton(buildIcon("bills"), "Bills", e -> showBillsDialog());
         VBox loadBtn = createActionButton(buildIcon("load"), "Load", e -> showBuyLoadDialog());
+        VBox transportBtn = createActionButton(buildIcon("transport"), "Transport", e -> showTransportCardDialog());
 
         final java.util.List<VBox> btns = java.util.Arrays.asList(
             depositBtn, withdrawBtn, transferBtn, voucherBtn,
-            payBtn, vCardBtn, pointsBtn, billsBtn, loadBtn
+            payBtn, vCardBtn, pointsBtn, billsBtn, loadBtn, transportBtn
         );
 
         // Collapsible behavior: show first 3 buttons + Show more tile initially
@@ -1221,6 +1291,35 @@ public class MainApp extends Application {
                 Circle d2 = new Circle(9,9,1.6); d2.setFill(Color.WHITE);
                 Circle d3 = new Circle(13,9,1.6); d3.setFill(Color.WHITE);
                 Group g = new Group(d1,d2,d3);
+                return createIconWrapper(g);
+            }
+            case "transport": {
+                // Bus icon
+                // Bus body
+                Rectangle busBody = new Rectangle(2, 4, 14, 10);
+                busBody.setArcWidth(2); busBody.setArcHeight(2);
+                busBody.setFill(Color.WHITE);
+                // Bus windows
+                Rectangle window1 = new Rectangle(3, 5, 3, 3);
+                window1.setFill(Color.web("#1F2937"));
+                Rectangle window2 = new Rectangle(7, 5, 3, 3);
+                window2.setFill(Color.web("#1F2937"));
+                Rectangle window3 = new Rectangle(11, 5, 3, 3);
+                window3.setFill(Color.web("#1F2937"));
+                // Door
+                Rectangle door = new Rectangle(3, 9, 3, 4);
+                door.setFill(Color.web("#FFD700"));
+                // Bus wheels
+                Circle wheel1 = new Circle(4.5, 14.5, 1.2);
+                wheel1.setFill(Color.web("#1F2937"));
+                Circle wheel2 = new Circle(13.5, 14.5, 1.2);
+                wheel2.setFill(Color.web("#1F2937"));
+                // Headlights
+                Circle light1 = new Circle(2.5, 7, 0.6);
+                light1.setFill(Color.web("#FFD700"));
+                Circle light2 = new Circle(2.5, 9, 0.6);
+                light2.setFill(Color.web("#FFD700"));
+                Group g = new Group(busBody, window1, window2, window3, door, wheel1, wheel2, light1, light2);
                 return createIconWrapper(g);
             }
             default: {
@@ -3405,12 +3504,12 @@ public class MainApp extends Application {
         );
         confirmMsg.setFont(Font.font("System", 12));
         confirmMsg.setStyle(
-            "-fx-background-color: #E0F2FE; " +
+            "-fx-background-color: #FEF3C7; " +
             "-fx-padding: 12; " +
-            "-fx-border-color: #7DD3FC; " +
+            "-fx-border-color: #FCD34D; " +
             "-fx-border-radius: 8; " +
             "-fx-border-width: 1; " +
-            "-fx-text-fill: #0369A1;"
+            "-fx-text-fill: #92400E;"
         );
         confirmMsg.setWrapText(true);
         confirmMsg.setStyle(confirmMsg.getStyle() + " -fx-opacity: 0;");
@@ -6240,10 +6339,17 @@ public class MainApp extends Application {
 
         mainContent.getChildren().addAll(headerBox, pointsInfoSection, redeemSection, infoBox, tierRewardsSection, confirmSection);
 
-        dialog.getDialogPane().setContent(mainContent);
+        // Wrap content in ScrollPane for scrolling
+        ScrollPane scrollPane = new ScrollPane(mainContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-control-inner-background: #FFFFFF;");
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        dialog.getDialogPane().setContent(scrollPane);
         dialog.setResizable(false);
         dialog.getDialogPane().setPrefWidth(500);
-        dialog.getDialogPane().setPrefHeight(950);
+        dialog.getDialogPane().setPrefHeight(600);
 
         ButtonType redeemType = new ButtonType("Redeem", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
@@ -7572,6 +7678,602 @@ public class MainApp extends Application {
         return btn;
     }
     
+    private void showTransportCardDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Book Your Ticket");
+        dialog.setHeaderText(null);
+
+        VBox mainContent = new VBox(20);
+        mainContent.setPadding(new Insets(20));
+        mainContent.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #FFFFFF, #F8FAFC);"
+        );
+
+        // Header Section with modern design
+        VBox headerBox = new VBox(10);
+        headerBox.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFA500); " +
+            "-fx-padding: 28 24; " +
+            "-fx-border-radius: 24; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,165,0,0.25), 20, 0, 0, 8);"
+        );
+        headerBox.setAlignment(Pos.TOP_LEFT);
+        
+        Label headerTitle = new Label("🎫 Book Your Ticket");
+        headerTitle.setFont(Font.font("System", FontWeight.BOLD, 28));
+        headerTitle.setStyle("-fx-text-fill: white; -fx-wrap-text: true;");
+
+        Label headerDesc = new Label("Plan your commute, buy your ticket, travel with ease");
+        headerDesc.setFont(Font.font("System", FontWeight.MEDIUM, 13));
+        headerDesc.setStyle("-fx-text-fill: rgba(255, 255, 255, 0.95); -fx-wrap-text: true;");
+
+        headerBox.getChildren().addAll(headerTitle, headerDesc);
+
+        // Quick Stats Section - modern card design with better spacing
+        HBox statsBox = new HBox(14);
+        statsBox.setAlignment(Pos.CENTER);
+        statsBox.setStyle("-fx-padding: 4 0;");
+
+        VBox stat1 = createModernStatItem("⚡", "Instant", "Book in seconds");
+        VBox stat2 = createModernStatItem("💳", "Cashless", "No card needed");
+        VBox stat3 = createModernStatItem("🔒", "Secure", "Encrypted");
+
+        HBox.setHgrow(stat1, Priority.ALWAYS);
+        HBox.setHgrow(stat2, Priority.ALWAYS);
+        HBox.setHgrow(stat3, Priority.ALWAYS);
+
+        statsBox.getChildren().addAll(stat1, stat2, stat3);
+
+        // Transportation Options Section - modern card with realistic spacing
+        VBox optionsSection = new VBox(16);
+        optionsSection.setPadding(new Insets(24));
+        optionsSection.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-color: rgba(0,0,0,0.06); " +
+            "-fx-border-radius: 24; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 16, 0, 0, 4);"
+        );
+
+        Label optionsLabel = new Label("🚗 Choose Transport Type");
+        optionsLabel.setFont(Font.font("System", FontWeight.BOLD, 15));
+        optionsLabel.setStyle("-fx-text-fill: #0F172A;");
+        
+        Label optionsDesc = new Label("Select your preferred transport method");
+        optionsDesc.setFont(Font.font("System", 11));
+        optionsDesc.setStyle("-fx-text-fill: #6B7280;");
+        
+        VBox optionsTitleBox = new VBox(6);
+        optionsTitleBox.getChildren().addAll(optionsLabel, optionsDesc);
+
+        // Initialize selectedTransportLabel early for grid cards to reference
+        Label selectedTransportLabel = new Label("🚌 Public Bus (Beep Card)");
+        selectedTransportLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        selectedTransportLabel.setStyle("-fx-text-fill: #0F172A;");
+
+        GridPane transportGrid = new GridPane();
+        transportGrid.setHgap(14);
+        transportGrid.setVgap(14);
+        transportGrid.setPrefWidth(400);
+
+        String[][] transports = {
+            {"🚌", "Public Bus", "Beep Card"},
+            {"🛣️", "Tollway", "AutoSweep/EasyTrip"},
+            {"🚗", "RFID Cards", "OneRFID/EasyTrip"},
+            {"🚇", "LRT/MRT", "Stored Value"}
+        };
+
+        int index = 0;
+        for (int row = 0; row < 2; row++) {
+            for (int col = 0; col < 2; col++) {
+                if (index < transports.length) {
+                    VBox transportCard = createTransportCard(transports[index][0], transports[index][1], transports[index][2], selectedTransportLabel, null);
+                    transportGrid.add(transportCard, col, row);
+                    index++;
+                }
+            }
+        }
+
+        optionsSection.getChildren().addAll(optionsTitleBox, transportGrid);
+
+        // Booking Details Section - Modern card design with realistic spacing
+        VBox bookingSection = new VBox(18);
+        bookingSection.setPadding(new Insets(24));
+        bookingSection.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-color: rgba(0,0,0,0.06); " +
+            "-fx-border-radius: 24; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 16, 0, 0, 4);"
+        );
+
+        Label bookingLabel = new Label("📋 Booking Details");
+        bookingLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
+        bookingLabel.setStyle("-fx-text-fill: #0F172A;");
+        
+        Label bookingDesc = new Label("Enter your journey details");
+        bookingDesc.setFont(Font.font("System", 11));
+        bookingDesc.setStyle("-fx-text-fill: #6B7280;");
+        
+        VBox bookingTitleBox = new VBox(6);
+        bookingTitleBox.getChildren().addAll(bookingLabel, bookingDesc);
+
+        // Transport Type Selection - Modern List View
+        VBox transportTypeSection = new VBox(12);
+        VBox typeLabelBox = new VBox(4);
+        Label typeLabel = new Label("🚌 Transport Type");
+        typeLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        typeLabel.setStyle("-fx-text-fill: #374151;");
+        
+        Label typeHint = new Label("Click a card above to select");
+        typeHint.setFont(Font.font("System", 10));
+        typeHint.setStyle("-fx-text-fill: #9CA3AF;");
+        typeLabelBox.getChildren().addAll(typeLabel, typeHint);
+        
+        VBox transportDisplayBox = new VBox(8);
+        transportDisplayBox.setPadding(new Insets(12));
+        transportDisplayBox.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-radius: 10; " +
+            "-fx-border-color: rgba(0,0,0,0.08); " +
+            "-fx-border-width: 1.5;"
+        );
+        transportDisplayBox.getChildren().add(selectedTransportLabel);
+        transportTypeSection.getChildren().addAll(typeLabelBox, transportDisplayBox);
+        
+        // Modern list of transport options with improved spacing
+        VBox transportListBox = new VBox(10);
+        transportListBox.setPadding(new Insets(12));
+        transportListBox.setStyle(
+            "-fx-background-color: #FAFAFA; " +
+            "-fx-border-color: rgba(0,0,0,0.06); " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0, 0, 1);"
+        );
+        
+        String[] transportTypes = {
+            "🚌 Public Bus (Beep Card)",
+            "🛣️ Tollway (AutoSweep)",
+            "🛣️ Tollway (EasyTrip)",
+            "📱 RFID Cards (OneRFID)",
+            "🚇 LRT/MRT Card"
+        };
+        
+        for (String transport : transportTypes) {
+            Button transportBtn = new Button(transport);
+            transportBtn.setPrefWidth(Double.MAX_VALUE);
+            transportBtn.setAlignment(Pos.CENTER_LEFT);
+            transportBtn.setPadding(new Insets(14, 18, 14, 18));
+            transportBtn.setStyle(
+                "-fx-font-size: 12; " +
+                "-fx-font-weight: normal; " +
+                "-fx-background-color: white; " +
+                "-fx-text-fill: #374151; " +
+                "-fx-border-radius: 10; " +
+                "-fx-padding: 14 18; " +
+                "-fx-border-color: rgba(0,0,0,0.06); " +
+                "-fx-border-width: 1;"
+            );
+            
+            transportBtn.setOnMouseEntered(e -> 
+                transportBtn.setStyle(
+                    "-fx-font-size: 12; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-background-color: linear-gradient(to right, #FFF9E6, #FFECB3); " +
+                    "-fx-text-fill: #78350F; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-padding: 14 18; " +
+                    "-fx-border-color: rgba(255,193,7,0.4); " +
+                    "-fx-border-width: 1.5; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 6, 0, 0, 2);"
+                )
+            );
+            
+            transportBtn.setOnMouseExited(e -> {
+                if (!transport.substring(0, 2).equals(selectedTransportLabel.getText().substring(0, 2))) {
+                    transportBtn.setStyle(
+                        "-fx-font-size: 12; " +
+                        "-fx-font-weight: normal; " +
+                        "-fx-background-color: white; " +
+                        "-fx-text-fill: #374151; " +
+                        "-fx-border-radius: 10; " +
+                        "-fx-padding: 14 18; " +
+                        "-fx-border-color: rgba(0,0,0,0.06); " +
+                        "-fx-border-width: 1;"
+                    );
+                }
+            });
+            
+            transportBtn.setOnAction(e -> {
+                selectedTransportLabel.setText(transport);
+                selectedTransportLabel.setStyle("-fx-text-fill: #F59E0B; -fx-font-weight: bold;");
+                transportBtn.setStyle(
+                    "-fx-font-size: 12; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500); " +
+                    "-fx-text-fill: white; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-padding: 14 18; " +
+                    "-fx-border-color: #FFB800; " +
+                    "-fx-border-width: 1.5; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.3), 8, 0, 0, 3);"
+                );
+                
+                // Reset other buttons
+                for (javafx.scene.Node node : transportListBox.getChildren()) {
+                    if (node instanceof Button && node != transportBtn) {
+                        Button otherBtn = (Button) node;
+                        otherBtn.setStyle(
+                            "-fx-font-size: 12; " +
+                            "-fx-font-weight: normal; " +
+                            "-fx-background-color: white; " +
+                            "-fx-text-fill: #374151; " +
+                            "-fx-border-radius: 10; " +
+                            "-fx-padding: 14 18; " +
+                            "-fx-border-color: rgba(0,0,0,0.06); " +
+                            "-fx-border-width: 1;"
+                        );
+                    }
+                }
+            });
+            
+            transportListBox.getChildren().add(transportBtn);
+        }
+        
+        ScrollPane transportScrollPane = new ScrollPane(transportListBox);
+        transportScrollPane.setStyle("-fx-control-inner-background: white;");
+        transportScrollPane.setPrefHeight(160);
+        transportScrollPane.setFitToWidth(true);
+        
+        String transportCombo = selectedTransportLabel.getText();
+
+        // From/To fields - Improved spacing and styling with hints
+        VBox routeSection = new VBox(14);
+        
+        VBox fromLabelBox = new VBox(4);
+        Label fromLabel = new Label("📍 Departure Point");
+        fromLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        fromLabel.setStyle("-fx-text-fill: #374151;");
+        
+        Label fromHint = new Label("Where are you starting from?");
+        fromHint.setFont(Font.font("System", 10));
+        fromHint.setStyle("-fx-text-fill: #9CA3AF;");
+        fromLabelBox.getChildren().addAll(fromLabel, fromHint);
+        
+        ComboBox<String> fromCombo = new ComboBox<>();
+        fromCombo.getItems().addAll(
+            "Cubao",
+            "EDSA",
+            "Makati",
+            "BGC",
+            "Manila Bay",
+            "Pasig",
+            "Laguna",
+            "Other (Specify)"
+        );
+        fromCombo.setValue("Cubao");
+        fromCombo.setPrefHeight(44);
+        fromCombo.setStyle(
+            "-fx-padding: 12; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-color: rgba(0,0,0,0.08); " +
+            "-fx-background-color: white; " +
+            "-fx-font-size: 12; " +
+            "-fx-text-fill: #374151; " +
+            "-fx-control-inner-background: #F9FAFB;"
+        );
+        
+        VBox toLabelBox = new VBox(4);
+        Label toLabel = new Label("🎯 Destination");
+        toLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        toLabel.setStyle("-fx-text-fill: #374151;");
+        
+        Label toHint = new Label("Where are you going?");
+        toHint.setFont(Font.font("System", 10));
+        toHint.setStyle("-fx-text-fill: #9CA3AF;");
+        toLabelBox.getChildren().addAll(toLabel, toHint);
+        
+        ComboBox<String> toCombo = new ComboBox<>();
+        toCombo.getItems().addAll(
+            "Makati",
+            "BGC",
+            "EDSA",
+            "Manila",
+            "Pasig",
+            "Laguna",
+            "Cavite",
+            "Other (Specify)"
+        );
+        toCombo.setValue("Makati");
+        toCombo.setPrefHeight(44);
+        toCombo.setStyle(
+            "-fx-padding: 12; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-color: rgba(0,0,0,0.08); " +
+            "-fx-background-color: white; " +
+            "-fx-font-size: 12; " +
+            "-fx-text-fill: #374151; " +
+            "-fx-control-inner-background: #F9FAFB;"
+        );
+
+        routeSection.getChildren().addAll(
+            fromLabelBox, fromCombo,
+            toLabelBox, toCombo
+        );
+
+        // Date & Time Section - Improved spacing with hints
+        VBox dateTimeSection = new VBox(10);
+        
+        VBox dateLabelBox = new VBox(4);
+        Label dateLabel = new Label("📅 Travel Date");
+        dateLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        dateLabel.setStyle("-fx-text-fill: #374151;");
+        
+        Label dateHint = new Label("When do you want to travel?");
+        dateHint.setFont(Font.font("System", 10));
+        dateHint.setStyle("-fx-text-fill: #9CA3AF;");
+        dateLabelBox.getChildren().addAll(dateLabel, dateHint);
+        
+        DatePicker datePicker = new DatePicker();
+        datePicker.setValue(java.time.LocalDate.now());
+        datePicker.setPrefHeight(44);
+        datePicker.setStyle(
+            "-fx-padding: 12; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-color: rgba(0,0,0,0.08); " +
+            "-fx-background-color: white; " +
+            "-fx-font-size: 12; " +
+            "-fx-text-fill: #374151;"
+        );
+
+        dateTimeSection.getChildren().addAll(dateLabelBox, datePicker);
+
+        // Quantity & Fare Estimate Section - Improved spacing with hints
+        VBox fareSection = new VBox(14);
+        
+        VBox quantityLabelBox = new VBox(4);
+        Label quantityLabel = new Label("🎫 Number of Tickets");
+        quantityLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        quantityLabel.setStyle("-fx-text-fill: #374151;");
+        
+        Label quantityHint = new Label("How many tickets do you need?");
+        quantityHint.setFont(Font.font("System", 10));
+        quantityHint.setStyle("-fx-text-fill: #9CA3AF;");
+        quantityLabelBox.getChildren().addAll(quantityLabel, quantityHint);
+        
+        Spinner<Integer> quantitySpinner = new Spinner<>(1, 20, 1);
+        quantitySpinner.setPrefHeight(44);
+        quantitySpinner.setStyle(
+            "-fx-padding: 12; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-color: rgba(0,0,0,0.08); " +
+            "-fx-background-color: white;"
+        );
+
+        // Fare display - Modern gradient with improved styling
+        HBox fareDisplayBox = new HBox(18);
+        fareDisplayBox.setStyle(
+            "-fx-background-color: linear-gradient(to right, #FFF9E6, #FFFBEB); " +
+            "-fx-padding: 18 20; " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-color: rgba(255, 193, 7, 0.25); " +
+            "-fx-border-width: 1.5; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.1), 10, 0, 0, 2);"
+        );
+        fareDisplayBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label fareAmountLabel = new Label("💰 Estimated Fare:");
+        fareAmountLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        fareAmountLabel.setStyle("-fx-text-fill: #92400E;");
+
+        Label totalFareLabel = new Label("₱" + (quantitySpinner.getValue() * 15));
+        totalFareLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
+        totalFareLabel.setStyle("-fx-text-fill: #F59E0B;");
+
+        quantitySpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
+            totalFareLabel.setText("₱" + (newVal * 15));
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        fareDisplayBox.getChildren().addAll(fareAmountLabel, spacer, totalFareLabel);
+
+        fareSection.getChildren().addAll(quantityLabelBox, quantitySpinner, fareDisplayBox);
+
+        bookingSection.getChildren().addAll(
+            bookingTitleBox, transportTypeSection, routeSection, dateTimeSection, fareSection
+        );
+
+        mainContent.getChildren().addAll(headerBox, statsBox, optionsSection, bookingSection);
+
+        // Wrap in ScrollPane for scrolling
+        ScrollPane scrollPane = new ScrollPane(mainContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-control-inner-background: linear-gradient(to bottom, #F8FAFC, #FFFFFF);");
+        
+        dialog.getDialogPane().setContent(scrollPane);
+        dialog.setResizable(false);
+        dialog.getDialogPane().setPrefWidth(480);
+        dialog.getDialogPane().setPrefHeight(800);
+
+        ButtonType bookType = new ButtonType("Book Ticket", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(bookType, cancelType);
+
+        // Style the buttons with modern design
+        for (ButtonType btn : dialog.getDialogPane().getButtonTypes()) {
+            javafx.scene.control.Button button = (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(btn);
+            if (button != null) {
+                button.setStyle(
+                    "-fx-padding: 16 32; " +
+                    "-fx-font-size: 13; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-border-radius: 14; " +
+                    "-fx-background-radius: 14; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0, 0, 2);"
+                );
+                if (btn == bookType) {
+                    button.setStyle(button.getStyle() + 
+                        "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500); " +
+                        "-fx-text-fill: white;");
+                } else {
+                    button.setStyle(button.getStyle() + 
+                        "-fx-background-color: #F3F4F6; " +
+                        "-fx-text-fill: #374151; " +
+                        "-fx-border-color: rgba(0,0,0,0.08); " +
+                        "-fx-border-width: 1.5;");
+                }
+            }
+        }
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == bookType) {
+                String transportType = selectedTransportLabel.getText();
+                String from = fromCombo.getValue();
+                String to = toCombo.getValue();
+                java.time.LocalDate travelDate = datePicker.getValue();
+                int quantity = quantitySpinner.getValue();
+                double totalFare = quantity * 15;
+
+                showAlert("✅ Booking Confirmed", 
+                    "Your ticket booking has been confirmed!\n\n" +
+                    "━━━━━━━━━━━━━━━━━━━\n" +
+                    "Transport: " + transportType + "\n" +
+                    "From: " + from + "\n" +
+                    "To: " + to + "\n" +
+                    "Travel Date: " + travelDate + "\n" +
+                    "Quantity: " + quantity + " ticket(s)\n" +
+                    "━━━━━━━━━━━━━━━━━━━\n\n" +
+                    "Fare per ticket: ₱15\n" +
+                    "Total Fare: ₱" + String.format("%.2f", totalFare) + "\n\n" +
+                    "Reference #: TX" + System.currentTimeMillis() % 1000000 + "\n\n" +
+                    "Your tickets will be ready shortly.\n" +
+                    "Check your email for ticket details.",
+                    Alert.AlertType.INFORMATION);
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private VBox createStatItem(String icon, String title, String description) {
+        VBox stat = new VBox(4);
+        stat.setAlignment(Pos.CENTER);
+        stat.setPadding(new Insets(12));
+        stat.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-radius: 12; " +
+            "-fx-border-color: #E2E8F0; " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);"
+        );
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setFont(Font.font("System", 24));
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 12));
+        titleLabel.setStyle("-fx-text-fill: #1E293B;");
+
+        Label descLabel = new Label(description);
+        descLabel.setFont(Font.font("System", 10));
+        descLabel.setStyle("-fx-text-fill: #64748B;");
+        descLabel.setWrapText(true);
+
+        stat.getChildren().addAll(iconLabel, titleLabel, descLabel);
+        return stat;
+    }
+
+    private VBox createModernStatItem(String icon, String title, String description) {
+        VBox stat = new VBox(8);
+        stat.setAlignment(Pos.CENTER);
+        stat.setPadding(new Insets(18));
+        stat.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #FFFFFF, #F9FAFB); " +
+            "-fx-border-radius: 18; " +
+            "-fx-border-color: rgba(0,0,0,0.05); " +
+            "-fx-border-width: 1; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0, 0, 3);"
+        );
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setFont(Font.font("System", 32));
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        titleLabel.setStyle("-fx-text-fill: #0F172A; -fx-line-spacing: 2;");
+
+        Label descLabel = new Label(description);
+        descLabel.setFont(Font.font("System", 10));
+        descLabel.setStyle("-fx-text-fill: #6B7280; -fx-line-spacing: 2;");
+        descLabel.setWrapText(true);
+        descLabel.setAlignment(Pos.CENTER);
+
+        stat.getChildren().addAll(iconLabel, titleLabel, descLabel);
+        return stat;
+    }
+
+    private VBox createTransportCard(String icon, String title, String subtitle, Label selectedLabel, Runnable onSelect) {
+        VBox card = new VBox(8);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(16));
+        card.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, #FFF9E6, #FFECB3); " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-color: #FFD700; " +
+            "-fx-border-width: 2; " +
+            "-fx-cursor: hand; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 8, 0, 0, 2);"
+        );
+
+        card.setOnMouseEntered(e -> card.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, #FFD700, #FFA500); " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-color: #FF8C00; " +
+            "-fx-border-width: 2; " +
+            "-fx-cursor: hand; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,165,0,0.4), 12, 0, 0, 4);"
+        ));
+        
+        card.setOnMouseExited(e -> card.setStyle(
+            "-fx-background-color: linear-gradient(to bottom right, #FFF9E6, #FFECB3); " +
+            "-fx-border-radius: 14; " +
+            "-fx-border-color: #FFD700; " +
+            "-fx-border-width: 2; " +
+            "-fx-cursor: hand; " +
+            "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 8, 0, 0, 2);"
+        ));
+        
+        // Make card clickable
+        card.setOnMouseClicked(e -> {
+            String displayText = icon + " " + title + " (" + subtitle + ")";
+            selectedLabel.setText(displayText);
+            selectedLabel.setStyle("-fx-text-fill: #F59E0B; -fx-font-weight: bold;");
+            if (onSelect != null) {
+                onSelect.run();
+            }
+        });
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setFont(Font.font("System", 32));
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        titleLabel.setStyle("-fx-text-fill: #1E293B;");
+
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setFont(Font.font("System", 11));
+        subtitleLabel.setStyle("-fx-text-fill: #64748B;");
+        subtitleLabel.setWrapText(true);
+
+        card.getChildren().addAll(iconLabel, titleLabel, subtitleLabel);
+        return card;
+    }
+    
     private void showAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -7935,19 +8637,67 @@ public class MainApp extends Application {
         );
         topUpBtn.setOnAction(e -> showVirtualCardTopUpDialog());
 
-        // Display Virtual Card balance (top-up amount only)
+        // Display Virtual Card balance (top-up amount only) with hide/show toggle
         UserAccount walletUser = azureApp.getUser(currentUser);
         double virtualCardBalance = (walletUser != null) ? walletUser.getVirtualCardBalance() : 0.0;
-        Label walletBalance = new Label(String.format("₱ %.2f", virtualCardBalance));
+        boolean isVCardVisible = (walletUser != null) ? walletUser.isVirtualCardBalanceVisible() : true;
+        
+        Label walletBalance = new Label(isVCardVisible ? String.format("₱ %.2f", virtualCardBalance) : "••••••••");
         walletBalance.setFont(Font.font("System", FontWeight.BOLD, 20));
         walletBalance.setStyle("-fx-text-fill: #111827;");
+        
+        // Hide/Show button for virtual card balance
+        final boolean[] vCardVisible = new boolean[] { isVCardVisible };
+        Button toggleVCardBtn = new Button(isVCardVisible ? "👁" : "👁‍🗨");
+        toggleVCardBtn.setFont(Font.font("System", 14));
+        toggleVCardBtn.setStyle(
+            "-fx-background-color: rgba(0, 0, 0, 0.05); " +
+            "-fx-text-fill: #111827; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        );
+        toggleVCardBtn.setOnMouseEntered(e -> toggleVCardBtn.setStyle(
+            "-fx-background-color: rgba(0, 0, 0, 0.08); " +
+            "-fx-text-fill: #111827; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        ));
+        toggleVCardBtn.setOnMouseExited(e -> toggleVCardBtn.setStyle(
+            "-fx-background-color: rgba(0, 0, 0, 0.05); " +
+            "-fx-text-fill: #111827; " +
+            "-fx-border-color: transparent; " +
+            "-fx-background-radius: 6; " +
+            "-fx-padding: 6 8; " +
+            "-fx-cursor: hand;"
+        ));
+        
+        toggleVCardBtn.setOnAction(event -> {
+            vCardVisible[0] = !vCardVisible[0];
+            if (vCardVisible[0]) {
+                walletBalance.setText(String.format("₱ %.2f", virtualCardBalance));
+                toggleVCardBtn.setText("👁");
+            } else {
+                walletBalance.setText("••••••••");
+                toggleVCardBtn.setText("👁‍🗨");
+            }
+            // Save preference to user account
+            UserAccount vCardUser = azureApp.getUser(currentUser);
+            if (vCardUser != null) {
+                vCardUser.setVirtualCardBalanceVisible(vCardVisible[0]);
+                azureApp.getFileManager().saveUsers(azureApp.getUsers());
+            }
+        });
 
         HBox topUpRow = new HBox();
         topUpRow.setAlignment(Pos.CENTER);
         topUpRow.setPadding(new Insets(6, 0, 0, 0));
         Region topSpacer = new Region();
         HBox.setHgrow(topSpacer, Priority.ALWAYS);
-        topUpRow.getChildren().addAll(walletBalance, topSpacer, topUpBtn);
+        topUpRow.getChildren().addAll(walletBalance, toggleVCardBtn, topSpacer, topUpBtn);
 
         balanceSection.getChildren().add(topUpRow);
 
@@ -8042,7 +8792,7 @@ public class MainApp extends Application {
         HBox.setHgrow(rankSpacer, Priority.ALWAYS);
         
         // Rank progress indicator
-        Label progressLabel = new Label("150,000~ above to RankUp Total: ₱ " + String.format("%,.2f", user.getTotalTransacted()));
+        Label progressLabel = new Label("100,000~ above to RankUp Total: ₱ " + String.format("%,.2f", user.getTotalTransacted()));
         progressLabel.setFont(Font.font("System", 11));
         progressLabel.setStyle("-fx-text-fill: #6B7280;");
         

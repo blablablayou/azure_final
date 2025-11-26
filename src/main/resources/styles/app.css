@@ -9,18 +9,37 @@
 
 .login-container {
     -fx-background-color: #FFFFFF;
-    -fx-padding: 60 40 60 40;
-    -fx-alignment: center;
-    -fx-spacing: 30;
-    -fx-max-width: 560;
-    -fx-pref-width: 560;
+    -fx-padding: 350 30 30 30;
+    -fx-alignment: top-center;
+    -fx-spacing: 28;
+    -fx-max-width: 420;
+    -fx-pref-width: 420;
 }
 
 .form-box {
-    -fx-spacing: 8;
+    -fx-spacing: 16;
     -fx-alignment: center-left;
     -fx-max-width: 420;
     -fx-pref-width: 420;
+}
+
+/* Input field styling */
+.text-input {
+    -fx-padding: 12 16;
+    -fx-font-size: 14;
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #1E293B;
+    -fx-prompt-text-fill: #94A3B8;
+}
+
+.text-input:focused {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #FFD700;
+    -fx-border-width: 2;
 }
 
 /* Balance card */
