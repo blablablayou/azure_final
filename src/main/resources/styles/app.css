@@ -2,6 +2,9 @@
 
 .login-wrapper {
     -fx-alignment: center;
+    -fx-background-color: #FFFFFF;
+    -fx-min-width: 480;
+    -fx-min-height: 900;
 }
 
 .login-container {

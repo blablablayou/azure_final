@@ -65,7 +65,7 @@ public class MainApp extends Application {
         double fixedWidth = 480.0;
         double fixedHeight = 900.0;
         scene = new Scene(root, fixedWidth, fixedHeight);
-        scene.setFill(Color.web("#FFFFFF"));
+        scene.setFill(Color.web("#57595B"));
         java.net.URL css = getClass().getResource("/styles/app.css");
         if (css != null) {
             scene.getStylesheets().add(css.toExternalForm());
@@ -99,7 +99,7 @@ public class MainApp extends Application {
         // place content towards top so the app title sits higher in window
         loginContainer.setAlignment(Pos.TOP_CENTER);
         // larger top padding to push the title further upward from center
-        loginContainer.setPadding(new Insets(140, 0, 12, 0));
+        loginContainer.setPadding(new Insets(200, 0, 12, 0));
         loginContainer.getStyleClass().add("login-container");
 
         // Account dropdown (Logout only)
@@ -115,22 +115,11 @@ public class MainApp extends Application {
             logoutBtn.prefWidthProperty().bind(accountMenu.widthProperty().subtract(20));
             CustomMenuItem logoutItem = new CustomMenuItem(logoutBtn, true);
             accountMenu.getItems().addAll(logoutItem);
-        // reduce spacing so the tagline sits closer under the brand
-        VBox logoBox = new VBox(4);
-        logoBox.setAlignment(Pos.CENTER);
         
-        Label logo = new Label("Azure");
-        logo.setFont(Font.font("System", FontWeight.BOLD, 36));
-        logo.setStyle("-fx-text-fill: #FFD700;");
-        
-            // App title above the welcome box — use Windows 'Cambria' as a close display serif
-            Label appTitle = new Label("Azure Digital Wallet");
-            appTitle.setFont(Font.font("Cambria", FontWeight.BOLD, 36));
-            appTitle.setStyle("-fx-font-family: 'Cambria'; -fx-text-fill: #FFD700;");
             // Welcome title and login form
             VBox welcomeBox = new VBox(6);
             welcomeBox.setAlignment(Pos.CENTER);
-            Label titleLabel = new Label("Welcome Back");
+            Label titleLabel = new Label("");
             titleLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
             titleLabel.setStyle("-fx-text-fill: #111827;");
             Label subtitle = new Label("Sign in to continue");
@@ -208,6 +197,7 @@ public class MainApp extends Application {
         
         HBox bottomRow = new HBox(12);
         bottomRow.setAlignment(Pos.CENTER);
+        bottomRow.setPadding(new Insets(-10, 0, 0, 0));
         VBox linkBox = new VBox(8);
         linkBox.setAlignment(Pos.CENTER);
         linkBox.getChildren().addAll(signUpRow, forgotRow);
@@ -224,15 +214,124 @@ public class MainApp extends Application {
             );
         }
         
-        // Place logo and app title above the welcome title
+        // Place content above the welcome title
         loginContainer.getChildren().addAll(
-            logoBox, appTitle, welcomeBox, formWrapper, bottomRow
+            welcomeBox, formWrapper, bottomRow
         );
 
-        StackPane wrapper = new StackPane(loginContainer);
+        // Create logo - load from resources
+        javafx.scene.image.ImageView logoImageView = new javafx.scene.image.ImageView();
+        
+        // Try to load the logo image from resources
+        try {
+            java.net.URL logoUrl = getClass().getResource("/images/azure-logo.png");
+            if (logoUrl != null) {
+                javafx.scene.image.Image logoImage = new javafx.scene.image.Image(logoUrl.toExternalForm());
+                logoImageView.setImage(logoImage);
+                logoImageView.setFitWidth(350);
+                logoImageView.setFitHeight(350);
+                logoImageView.setPreserveRatio(true);
+                logoImageView.setSmooth(true);
+            } else {
+                System.out.println("Logo image not found at /images/azure-logo.png");
+                createFallbackLogo(logoImageView);
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading logo: " + e.getMessage());
+            createFallbackLogo(logoImageView);
+        }
+        
+        // Position logo as overlay on top without affecting layout
+        VBox logoOverlay = new VBox(logoImageView);
+        logoOverlay.setAlignment(Pos.TOP_CENTER);
+        logoOverlay.setPadding(new Insets(20, 0, 30, 0));
+        logoOverlay.setMouseTransparent(true);
+        logoOverlay.setPickOnBounds(false);
+
+        StackPane wrapper = new StackPane(loginContainer, logoOverlay);
         wrapper.getStyleClass().add("login-wrapper");
         wrapper.setAlignment(Pos.CENTER);
+        wrapper.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
         root.setCenter(wrapper);
+    }
+    
+    // Create a fallback logo if image loading fails
+    private void createFallbackLogo(javafx.scene.image.ImageView logoImageView) {
+        // Create a canvas-based logo with gradient circle and icons matching your design
+        javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(300, 300);
+        javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
+        
+        // Draw radial gradient circle (gold to orange)
+        javafx.scene.paint.RadialGradient gradient = new javafx.scene.paint.RadialGradient(
+            0, 0, 0.5, 0.5, 1, true, javafx.scene.paint.CycleMethod.NO_CYCLE,
+            new javafx.scene.paint.Stop(0, Color.web("#FFD700")),
+            new javafx.scene.paint.Stop(0.7, Color.web("#FFC107")),
+            new javafx.scene.paint.Stop(1, Color.web("#FF8C00"))
+        );
+        gc.setFill(gradient);
+        gc.fillOval(0, 0, 300, 300);
+        
+        // Draw decorative dots around circle
+        gc.setFill(Color.color(1, 1, 1, 0.6));
+        for (int angle = 0; angle < 360; angle += 45) {
+            double rad = Math.toRadians(angle);
+            double x = 150 + 136.67 * Math.cos(rad);
+            double y = 150 + 136.67 * Math.sin(rad);
+            double size = (angle % 90 == 0) ? 8.75 : 6.25;
+            gc.fillOval(x - size/2, y - size/2, size, size);
+        }
+        
+        // Draw main arrow pointing up-right (white)
+        gc.setFill(Color.color(1, 1, 1, 0.95));
+        double[] arrow1X = {112.5, 162.5, 137.5};
+        double[] arrow1Y = {125, 75, 162.5};
+        gc.fillPolygon(arrow1X, arrow1Y, 3);
+        
+        // Draw secondary arrow pointing down-right
+        gc.setFill(Color.color(1, 1, 1, 0.9));
+        double[] arrow2X = {130, 180, 155};
+        double[] arrow2Y = {187.5, 137.5, 225};
+        gc.fillPolygon(arrow2X, arrow2Y, 3);
+        
+        // Draw dollar sign circle (top right)
+        gc.setFill(Color.color(1, 1, 1, 0.95));
+        gc.fillOval(195, 62.5, 45, 45);
+        
+        // Dollar sign text inside circle
+        gc.setFill(Color.web("#FF8C00"));
+        gc.setFont(javafx.scene.text.Font.font("System", 40));
+        gc.fillText("$", 205, 97.5);
+        
+        // Draw smile/curve (white arc)
+        gc.setStroke(Color.color(1, 1, 1, 0.85));
+        gc.setLineWidth(12.5);
+        
+        // Draw curved smile using path
+        javafx.scene.shape.Path smilePath = new javafx.scene.shape.Path();
+        javafx.scene.shape.MoveTo moveTo = new javafx.scene.shape.MoveTo(87.5, 212.5);
+        javafx.scene.shape.QuadCurveTo quadTo = new javafx.scene.shape.QuadCurveTo(150, 262.5, 212.5, 212.5);
+        smilePath.getElements().addAll(moveTo, quadTo);
+        smilePath.setStroke(Color.color(1, 1, 1, 0.85));
+        smilePath.setStrokeWidth(12.5);
+        
+        // Draw decorative curved lines
+        gc.setLineWidth(7.5);
+        gc.setStroke(Color.color(1, 1, 1, 0.65));
+        
+        // Small accent dots inside
+        gc.setFill(Color.color(1, 1, 1, 0.8));
+        double[][] dots = {{87.5, 150}, {175, 125}, {137.5, 212.5}, {200, 225}};
+        for (double[] dot : dots) {
+            gc.fillOval(dot[0] - 3.75, dot[1] - 3.75, 7.5, 7.5);
+        }
+        
+        // Create image from canvas
+        javafx.scene.image.WritableImage writableImage = new javafx.scene.image.WritableImage(300, 300);
+        canvas.snapshot(null, writableImage);
+        logoImageView.setImage(writableImage);
+        logoImageView.setFitWidth(300);
+        logoImageView.setFitHeight(300);
+        logoImageView.setPreserveRatio(true);
     }
     
     private void handleLogin(TextField usernameField, PasswordField pinField) {
@@ -284,6 +383,8 @@ public class MainApp extends Application {
             pinField.clear();
         }
     }
+    
+    // Create a fallback logo if image loading fails
     
     private void showForgotPinDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
